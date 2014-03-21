@@ -17,7 +17,7 @@ void clean_string(std :: string& s){
 
 int main(int argc, char** argv){    
     if (argc != 3){        
-        std :: cerr << "Usage: build.exe input_file output_file" << std :: endl;    
+        std :: cerr << "Usage: GraphBuilder.exe input_file output_file" << std :: endl;    
     } else {        
         const char* input_file = argv[1];
         const char* output_file = argv[2];
@@ -55,7 +55,7 @@ int main(int argc, char** argv){
           		}
             }
         }
-        std :: map<std:: string, std :: map<std :: string, std :: pair<int, int> > > :: iterator it;
+        std :: map<std :: string, std :: map<std :: string, std :: pair<int, int> > > :: iterator it;
         for (it = graph.begin(); it != graph.end(); ++it){
             std :: map<std :: string, std :: pair<int, int> > :: iterator v_it;
             ofs << it->first << ": ";
