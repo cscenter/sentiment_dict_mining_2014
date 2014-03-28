@@ -1,6 +1,6 @@
+# -*- coding: cp1251- -*-
 __author__ = 'Egor Gorbunov'
 
-import os
 import sys
 
 pairs_dict = {} #dictionary of dictionaries for pairs of adjectives
@@ -13,7 +13,7 @@ def add_pair(adj1, adj2, polarity):
     :param polarity: = 1 if adjectives conjunct positively
                      = -1 if adj. conjunct negatively
     """
-   # print(polarity)
+
     global pairs_dict
     if adj1 in pairs_dict:
         if adj2 in pairs_dict[adj1]:
@@ -40,49 +40,16 @@ def print_dict(filename):
     f = open(filename, 'w')
     for a1 in pairs_dict.keys():
         for a2 in pairs_dict[a1].keys():
-            f.write(str(pairs_dict[a1][a2]) + " " + a1 + " " + a2 + "\n")
+            f.write(' '.join([str(pairs_dict[a1][a2]), a1, a2, '\n']))
             #print(pairs_dict[a1][a2])
 
-def is_pretext(string):
-    """
-
-    :param string:
-    :return:
-    """
-
+def get_part_of_speech(string):
+    d = {'SPRO': 'pronoun', 'PR': 'pretext', 'ADV': 'adverb', 'S': 'noun', 'V': 'verb'}
     spl_str = string.split('=')
-    if len(spl_str) >= 2:
-        if spl_str[1] == "PR":
-            return True
-
-    return False
-
-def is_pronoun(string):
-    """
-
-    :param string:
-    :return:
-    """
-
-    spl_str = string.split('=')
-    if len(spl_str) >= 2:
-        if spl_str[1] == "SPRO":
-            return True
-    return False
-
-def is_adverb(string):
-    """Checks, if given string stands for adverb
-
-    :param string: Input string - line from file, which was processed by mystem.
-    :return: if string conforms to pattern: "%word%=ADV=|..." it return True,
-             if string does not conform function returns False
-    """
-
-    spl_str = string.split('=')
-    if len(spl_str) >= 2:
-        if spl_str[1] == "ADV":
-            return True
-    return False
+    if len(spl_str) > 1 and spl_str[1] in d:
+        return d[spl_str[1]]
+    else:
+        return ''
 
 def get_adjective(string):
     """Checks, if given string stands for adjective
@@ -109,37 +76,21 @@ def is_neg_part(string):
     if len(spl_str) >= 2:
         if spl_str[0] == 'не':
             return True
-
-    return False
-
-def is_noun(string):
-    spl_str = string.split('=')
-    if len(spl_str) >= 2:
-
-        if spl_str[1] == "S":
-            return True
-    return False
-
-def is_verb(string):
-    spl_str = string.split('=')
-    if len(spl_str) >= 2:
-        if spl_str[1] == "V":
-            return True
     return False
 
 def get_conjunction_polarity(string):
     """
-
+    If string describes conjunction, function return it's polarity
     :param string:
     :return:
     """
 
     spl_str = string.split('=')
 
-    if spl_str[0] == "и":
+    if spl_str[0] in ['и']:
         return 1
 
-    if spl_str[0] == "а" or spl_str[0].encode() == "но".encode() or spl_str[0] == "зато":
+    if spl_str[0] in ['a', 'но', 'зато']:
         return -1
 
     return 0
@@ -155,7 +106,8 @@ def is_end_of_sentence(string):
     spl_str = string.split('_')
     spl_str = list(filter(('').__ne__, spl_str))
     if len(spl_str) > 0:
-        if spl_str[0].count('.') > 0 or spl_str[0].count('!') or spl_str[0].count('?'):
+        if spl_str[0].count('.') or spl_str[0].count('!') or spl_str[0].count('?')\
+            or spl_str[0].count(';') or spl_str[0] == "\\n\n":
             return True
 
     return False
@@ -185,16 +137,17 @@ def read_next_adjective(file):
         if not my_str:
             break
 
+        part = get_part_of_speech(my_str)
         if is_end_of_sentence(my_str):
             neg_factor = 0
             i += 1000 #just a big distance
         elif is_neg_part(my_str):
             neg_index = i
-        elif is_verb(my_str):
+        elif part == 'verb':
             verb_count += 1
-        elif is_noun(my_str):
+        elif part == 'noun':
             noun_count += 1
-        elif is_adverb(my_str) or is_pretext(my_str) or is_pronoun(my_str) or is_separator(my_str):
+        elif part in ['adverb', 'pretext', 'pronoun'] or is_separator(my_str):
             if i - neg_index  == 1 and neg_index != -1:
                 neg_index += 1
         else:
@@ -209,7 +162,6 @@ def read_next_adjective(file):
 
 def read_conjunction(file):
     """
-
     :param file: mystemmed file to read from
     :return:
     """
@@ -218,24 +170,33 @@ def read_conjunction(file):
     polarity = 1
     distance = 0
     adjective = ""
-
+    neg_index = -1
+    neg_factor = 1
     while True:
         distance += 1
         s = file.readline()
         if not s:
             break
 
+        part = get_part_of_speech(s)
         if is_end_of_sentence(s):
             polarity = 0
             distance += 1000 #just a big distance
             break
-        elif is_verb(s):
+        elif is_neg_part(s):
+            neg_index = distance
+        elif part == 'verb':
             verb_count += 1
-        elif is_noun(s):
+        elif part == 'noun':
             noun_count += 1
+        elif part in ['adverb', 'pretext', 'pronoun'] or is_separator(s):
+            if distance - neg_index  == 1 and neg_index != -1:
+                neg_index += 1
 
         adjective = get_adjective(s)
         if adjective != "":
+            if distance - neg_index  == 1 and neg_index != -1:
+                neg_factor = -1
             break
 
         p = get_conjunction_polarity(s)
@@ -244,39 +205,27 @@ def read_conjunction(file):
         if p < 0:
             break
 
-
-    return polarity, distance, verb_count, noun_count, adjective
+    return polarity, distance, verb_count, noun_count, adjective, neg_factor
 
 def analyze_file(in_filename, out_filename):
-    """Given file processed with mystem and after that function parse file and
+    """that function parse file and
     get pairs of adjectives with polarity
 
-    :param in_filename: file to process with mystem and analyze
+    :param in_filename: file, preprocessed with mystem with "-icln" options
     :param out_filename: output file with pairs
     """
-    proc_filename = 'mystemout.txt'
-
-    #here can be some not caught errors
-    os.system('mystem -icln ' + in_filename + ' ' + proc_filename)
-
     #opening mystem'ed file to parse
     try:
-        f = open(proc_filename, 'r')
+        f = open(in_filename, 'r')
     except IOError:
-        print('cannot open file ' + proc_filename)
+        print('cannot open file ' + in_filename)
 
-    neg_factor_1 = 1
+    neg_factor_1 = 1 #negative factor for first adjective
     neg_factor_2 = 1
-    adj1 = ""
-    adj2 = ""
-    polarity = 0
-    adj1_distance = 0
-    adj2_distance = 0
-    conj_ind = 0
+    adj1 = "" #first adjective
+    adj2 = "" #second adjective
+    adj2_distance = 0 #distance between 2-nd adjective and conjunction of first adjective
     while True:
-        verb_count1 = 0
-        noun_count1 = 0
-
         #getting first adjective
         if adj1 == "":
             adj1, neg_factor_1, pos1, verb_count1, noun_count1  = read_next_adjective(f)
@@ -288,7 +237,7 @@ def analyze_file(in_filename, out_filename):
 
         #trying to find conjunction and maybe second adjective if they adjectives go without negative conjunction
         # (between them can be space, comma, "и")
-        polarity, conj_ind, verb_count2, noun_count2, adj2 = read_conjunction(f)
+        polarity, conj_distance, verb_count2, noun_count2, adj2, neg_factor_2 = read_conjunction(f)
         if polarity == 0:
             adj1 = ""
             adj2 = ""
@@ -304,15 +253,19 @@ def analyze_file(in_filename, out_filename):
         if adj1 == "" or adj2 == "":
             break
 
-        #here we have 2 adjectives, which go successive (after each other)
-        #but the distance between can be big
+        #here we have 2 adjectives, which go successive, but the distance between them can be big
         #I think, that only number of verbs and nouns matter, and there can only be 2 nouns and verbs btw.
-        #adjectives ('Прекрасное времяпрепровождение - гулять по пляжу, но песок слишком твердый') TODO: change allowed number of nouns
+        #adjectives ('Прекрасное времяпрепровождение - гулять по пляжу, но песок слишком твердый')
         #adverbs, pronouns, pretext does't matter too. ('Плохое питание, зато, по-моему, очень хороший номер')
-        if verb_count2 <= 1 and noun_count2 <= 1 and verb_count3 <= 1 and noun_count3 <= 1\
-            and conj_ind <= 5 and adj2_distance <= 5:
-            polarity *= neg_factor_1 * neg_factor_2
-            add_pair(adj1, adj2, polarity)
+        if verb_count2 <= 1 and noun_count2 == 0 and verb_count3 <= 1 and noun_count3 == 0\
+            and conj_distance <= 5 and adj2_distance <= 5:
+            a1 = adj1
+            a2 = adj2
+            if neg_factor_1 == -1:
+                a1 = ' '.join(['не', adj1])
+            if neg_factor_2 == -1:
+                a2 = ' '.join(['не', adj2])
+            add_pair(a1, a2, polarity)
 
         adj1 = adj2
         adj2 = ""
