@@ -7,7 +7,7 @@ pairs_dict = {} #dictionary of dictionaries for pairs of adjectives
 
 def add_pair(adj1, adj2, polarity):
     """Adds pair of two adjectives into dictionary
-
++
     :param adj1: adjective 1
     :param adj2: adjective 2
     :param polarity: = 1 if adjectives conjunct positively
@@ -15,16 +15,15 @@ def add_pair(adj1, adj2, polarity):
     """
 
     global pairs_dict
-    if adj1 in pairs_dict:
-        if adj2 in pairs_dict[adj1]:
-            pairs_dict[adj1][adj2] += polarity
-        else:
-            pairs_dict[adj1][adj2] = polarity
+
+    if adj1 in pairs_dict and adj2 in pairs_dict[adj1]:
+        pairs_dict[adj1][adj2] += polarity
+    elif adj2 in pairs_dict and adj1 in pairs_dict[adj2]:
+        pairs_dict[adj2][adj1] += polarity
+    elif adj1 in pairs_dict:
+        pairs_dict[adj1][adj2] = polarity
     elif adj2 in pairs_dict:
-        if adj1 in pairs_dict[adj2]:
-            pairs_dict[adj2][adj1] += polarity
-        else:
-            pairs_dict[adj2][adj1] = polarity
+        pairs_dict[adj2][adj1] = polarity
     else:
         pairs_dict[adj1] = {}
         pairs_dict[adj1][adj2] = polarity
