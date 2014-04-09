@@ -7,12 +7,13 @@
 using namespace std;
 
 
-vector <vector <pair <int, int> > > weight;
-vector <vector <int> > graph;
+vector <vector <pair <int, int> > > w;
+vector <vector <int> > g;
 vector <string> words;
+char *posFile, *negFile;
 
 
-int find(string word)
+int get_index(string word)
 {
 	for (int i = 0; i < words.size(); i++)
 	{
@@ -29,124 +30,179 @@ int create_vertex(string word)
 {
 	int i = words.size();
 	words.push_back(word);
-	graph.push_back(vector <int>());
-	weight.push_back(vector <pair <int, int> > ());
+	g.push_back(vector <int>());
+	w.push_back(vector <pair <int, int> > ());
 	return i;
 }
 
 
 void add_edge(string word1, string word2, int pos, int neg)
 {
-	int beg = find(word1);
+	int beg = get_index(word1);
 	if (beg == -1)			
 	{
 		beg = create_vertex(word1);
 	}
 
-	int end = find(word2);
+	int end = get_index(word2);
 	if (end == -1)			
 	{
 		end = create_vertex(word2);
 	}
 
-    graph[beg].push_back(end);
-    weight[beg].push_back(make_pair(pos, neg));
-    graph[end].push_back(beg);
-    weight[end].push_back(make_pair(pos, neg));
+    g[beg].push_back(end);
+    w[beg].push_back(make_pair(pos, neg));
+    g[end].push_back(beg);
+    w[end].push_back(make_pair(pos, neg));
 }
 
 
-int the_most_heavy(set<int> Result, int i)
+int the_most_heavy(set<int> Result, set<int> Opposite, int i)
 {
 	int res = 0;
-	for (int j = 0; j < graph[i].size(); j++)
+	for (int j = 0; j < g[i].size(); j++)
 	{
-		if (Result.count(graph[i][j]) && weight[i][j].first > res)
+		if (Result.count(g[i][j]) && w[i][j].first - w[i][j].second > res)
 		{
-			res = weight[i][j].first;
+			res = w[i][j].first - w[i][j].second;
 		}
 	}
 	return res;	
 }
 
 
-int the_sum(set<int> Result, int i)
+int the_sum(set<int> Result, set<int> Opposite, int i)
 {
 	int res = 0;
-	for (int j = 0; j < graph[i].size(); j++)
+	for (int j = 0; j < g[i].size(); j++)
 	{
-		if (Result.count(graph[i][j]))
+		if (Result.count(g[i][j]))
 		{
-			res += weight[i][j].first;
+			res += w[i][j].first - w[i][j].second;
+		}
+		if (Opposite.count(g[i][j]))
+		{
+			res -= w[i][j].first - w[i][j].second;
 		}
 	}
 	return res;	
 }
 
-
-set<int> analyze(vector<string> seed, int (*func)(set<int>, int))
+set<int> init(set<int> Result)
 {
-	set<int> Result, Candidate;
-	for (int i = 0; i < seed.size(); i++)
-	{          
-		Result.insert(find(seed[i]));
-	}
-
-	for (set<int> :: iterator it = Result.begin(); it != Result.end(); it++)
+    set<int> Candidate;
+    for (set<int> :: iterator it = Result.begin(); it != Result.end(); it++)
 	{
-		for (int i = 0; i < graph[*it].size(); i++)
+		if (*it < 0)
+			continue;
+		for (int i = 0; i < g[*it].size(); i++)
 		{
-			if (!Result.count(graph[*it][i]))
+			if (!Result.count(g[*it][i]))
 			{
-				Candidate.insert(graph[*it][i]);
+				Candidate.insert(g[*it][i]);
 			}
 		}
 	}
+	
+	return Candidate;
+}
 
+bool add_vertex(set<int> *Result, set<int> *Opposite, set<int> *Candidate, int (*func)(set<int>, set<int>, int))
+{
+	int best_index = -1, best_max = 0;
+	for (set<int> :: iterator it = Candidate->begin(); it != Candidate->end(); it++)
+	{
+		int res = (*func)(*Result, *Opposite, *it);
+		if (res > best_max)
+		{
+			best_index = *it;
+			best_max = res;
+		}
+	}
+	
+	cerr << best_index << endl;
+	if (best_index != -1 && !Opposite->count(best_index))
+	{
+		Result->insert(best_index);
+		for (int i = 0; i < g[best_index].size(); i++)
+		{
+			if (!Result->count(g[best_index][i]))
+			{
+				Candidate->insert(g[best_index][i]);
+			}
+		}
+		Candidate->erase(best_index);
+		return true;
+	}
+	return Opposite->count(best_index) ? false : true;
+}
+
+
+void out(set<int> res, char* filename)
+{
+	freopen(filename, "w", stdout);
+	for (set<int> :: iterator it = res.begin(); it != res.end(); it++)
+    {
+    	if (*it < 0)
+    		continue;
+    	cout << words[*it] << endl;
+    }
+    fclose(stdout);
+}
+
+
+void analyze(vector<string> seed_pos, vector<string> seed_neg, int (*func)(set<int>, set<int>, int))
+{
+	set<int> Result_pos, Result_neg;
+
+	for (int i = 0; i < seed_pos.size(); i++)
+	{          
+		Result_pos.insert(get_index(seed_pos[i]));
+	}
+
+	for (int i = 0; i < seed_neg.size(); i++)
+	{          
+		Result_neg.insert(get_index(seed_neg[i]));
+	}
+	        
+	set<int> Candidate_pos = init(Result_pos); 
+	set<int> Candidate_neg = init(Result_neg); 
+	       
+	int step = 1;
     while (true)
     {
-    	int best_index = -1, best_max = 0;
-    	for (set<int> :: iterator it = Candidate.begin(); it != Candidate.end(); it++)
+    	if (step)
     	{
-    		int res = (*func)(Result, *it);
-    		if (res > best_max)
-    		{
-    			best_index = *it;
-    			best_max = res;
-    		}
-    	}
-    	
-    	if (best_index != -1)
-    	{
-    		Result.insert(best_index);
-    		for (int i = 0; i < graph[best_index].size(); i++)
-    		{
-    			if (!Result.count(graph[best_index][i]))
-    			{
-    				Candidate.insert(graph[best_index][i]);
-    			}
-    		}
-    		Candidate.erase(best_index);
+    		if (!add_vertex(&Result_pos, &Result_neg, &Candidate_pos, (*func)))
+    			break;
     	}
     	else
     	{
-    		break;
+    		if (!add_vertex(&Result_neg, &Result_pos, &Candidate_neg, (*func)))
+    			break;
     	}
+    	step = 1 - step;
+    	if (Candidate_pos.size() == 0 && Candidate_neg.size() == 0)
+    		break;
     }  
-    return Result;
+
+    out(Result_pos, posFile);
+    out(Result_neg, negFile);
 }
+
 
 int main(int argc, char* argv[])
 {
-    if (argc != 3)
+    if (argc != 4)
     {        
-        cerr << "Usage: GraphAnalyzer.exe input_file output_file" << endl;    
+        cerr << "Usage: GraphAnalyzer.exe input_file pos_file neg_file" << endl;    
     	return 0;
     }
 
-	freopen(argv[1], "r", stdin);
-	freopen(argv[2], "w", stdout);
+	posFile = argv[2];
+	negFile = argv[3];
 
+	freopen(argv[1], "r", stdin);
 	while (!feof(stdin))
 	{
 		string begin, end;
@@ -154,15 +210,14 @@ int main(int argc, char* argv[])
 		cin >> begin >> end >> pos >> neg; 
 		add_edge(begin, end, pos, neg);   
 	}
+	fclose(stdin);
 
-	vector <string> seed;
-	seed.push_back("хороший");
+	vector <string> seed_pos;
+	seed_pos.push_back("хороший");
+	vector <string> seed_neg;
+	seed_neg.push_back("плохой");
 	
-	set <int> res = analyze(seed, the_most_heavy);
-    for (set<int> :: iterator it = res.begin(); it != res.end(); it++)
-    {
-    	cout << words[*it] << endl;
-    }
+	analyze(seed_pos, seed_neg, the_most_heavy);
 
 	return 0;
 }
