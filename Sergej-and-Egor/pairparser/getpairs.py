@@ -47,7 +47,7 @@ def print_dict(dict_to_print, filename):
 
 
 def get_part_of_speech(string):
-    d = {'SPRO': 'pronoun', 'PR': 'pretext', 'ADV': 'adverb', 'S': 'noun', 'V': 'verb'}
+    d = {'SPRO': 'pronoun', 'PR': 'pretext', 'ADV': 'adverb', 'S': 'noun', 'V': 'verb', 'A': 'adjective'}
     spl_str = string.split('=')
     if len(spl_str) > 1 and spl_str[1] in d:
         return d[spl_str[1]]
@@ -62,10 +62,13 @@ def get_adjective(string):
     :return: if string conforms to pattern: "%word%=A=|..." it return adjective (%word%),
              if string does not, function returns empty str. ("")
     """
-    x = string.count("=A=")
-    y = string.count("|") + 1
     spl_str = string.split('=')
-    if x == y:
+    # x = string.count("=A=")
+    # y = string.count("|") + 1
+    # if x == y:
+        # return spl_str[0]
+
+    if len(spl_str) > 1 and spl_str[1] == 'A':
         return spl_str[0]
     return ""
 
@@ -93,10 +96,10 @@ def get_conjunction_polarity(string):
 
     spl_str = string.split('=')
 
-    if spl_str[0] in ['и']:
+    if spl_str[0] in ['и', ',']:
         return 1
 
-    if spl_str[0] in ['a', 'но', 'зато', 'хотя']:
+    if spl_str[0] in ['a', 'но', 'зато'] or 'хотя=PART=' in string:
         return -1
 
     return 0
@@ -244,11 +247,11 @@ def get_pairs(in_filename):
         print('cannot open file ' + in_filename)
 
     adj1_info = {'adj': ""}
-    adj2_info = {}
 
     global pairs_dict
     global pairs_neg
     global pairs_no_neg
+
     while True:
         #getting first adjective
         if adj1_info['adj'] == "":
