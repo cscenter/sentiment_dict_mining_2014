@@ -16,3 +16,4 @@ res_neg = open(sys.argv[6], "w", encoding = "utf-8")
 
 res_pos.write("\n".join(pos_dict.intersection(data)))
 res_neg.write("\n".join(neg_dict.intersection(data)))
+
