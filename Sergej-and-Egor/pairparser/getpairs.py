@@ -23,7 +23,7 @@ def get_adjective(string):
     x = string.count("=A=")
     y = string.count("|") + 1
     if x == y:
-        return spl_str[0]
+        return spl_str[0].strip('+- \n  0987654321!*/,?~')
 
     #if len(spl_str) > 1 and spl_str[1] == 'A':
     #    return spl_str[0]
@@ -40,7 +40,7 @@ def is_neg_part(string):
      """
     spl_str = string.split('=')
     if len(spl_str) >= 2:
-        if spl_str[0] == 'не':
+        if spl_str[0] in ['не']:
             return True
     return False
 
@@ -57,7 +57,7 @@ def get_conjunction_polarity(string):
     if spl_str[0] in ['и', ',']:
         return 1
 
-    if spl_str[0] in ['a', 'но', 'зато'] or 'хотя=PART=' in string:
+    if spl_str[0] in ['a', 'но', 'зато', 'или'] or 'хотя=PART=' in string:
         return -1
 
     return 0
@@ -101,12 +101,16 @@ def get_gender(string):
 
 
 class PairParser:
-    pairs_dict = {}  # dictionary of dictionaries for pairs of adjectives
-    pairs_no_neg = {}
-    pairs_neg = {}
+    def __init__(self):
+        self.pairs_dict = {}  # dictionary of dictionaries for pairs of adjectives
+        self.pairs_no_neg = {}
+        self.pairs_neg = {}
 
-    @staticmethod
-    def add_pair(dict_to_add, adj1, adj2, polarity):
+        self.pair_info = {}  # how much that pair appear with negative polarity
+
+        self.line_number = 0  # line number in current file
+
+    def add_pair(self, dict_to_add, adj1, adj2, polarity):
         """Adds pair of two adjectives into dictionary
 
      :param dict_to_add: dictionary to precess
@@ -116,17 +120,23 @@ class PairParser:
                       = -1 if adj. conjunct negatively
      """
 
-        if adj1 in dict_to_add and adj2 in dict_to_add[adj1]:
-            dict_to_add[adj1][adj2] += polarity
-        elif adj2 in dict_to_add and adj1 in dict_to_add[adj2]:
-            dict_to_add[adj2][adj1] += polarity
-        elif adj1 in dict_to_add:
-            dict_to_add[adj1][adj2] = polarity
-        elif adj2 in dict_to_add:
-            dict_to_add[adj2][adj1] = polarity
-        else:
+        if adj1 == adj2:
+            return
+        elif adj1 > adj2:
+            adj1, adj2 = adj2, adj1
+
+        ind = 0
+        if polarity < 0:
+            ind = 1
+
+        if adj1 not in dict_to_add:
             dict_to_add[adj1] = {}
-            dict_to_add[adj1][adj2] = polarity
+            self.pair_info[adj1] = {}
+            dict_to_add[adj1][adj2] = [0, 0]
+        elif adj2 not in dict_to_add[adj1]:
+            dict_to_add[adj1][adj2] = [0, 0]
+
+        dict_to_add[adj1][adj2][ind] += polarity
 
     @staticmethod
     def print_dict(dict_to_print, filename):
@@ -143,7 +153,7 @@ class PairParser:
         f.write(str(size) + '\n')
         for a1 in dict_to_print.keys():
             for a2 in dict_to_print[a1].keys():
-                f.write(' '.join([str(dict_to_print[a1][a2]), a1, a2, '\n']))
+                f.write(' '.join([str(dict_to_print[a1][a2][0]), str(dict_to_print[a1][a2][1]), a1, a2, '\n']))
                 # print(dict_to_print[a1][a2])
 
         f.close()
@@ -154,8 +164,7 @@ class PairParser:
     def print_pairs_no_neg(self, filename):
         self.print_dict(self.pairs_no_neg, filename)
 
-    @staticmethod
-    def read_next_adjective(file):
+    def read_next_adjective(self, file):
         """Input - file, which was processed by mystem.
      Function search for adjective in text file
 
@@ -175,6 +184,8 @@ class PairParser:
         while True:
             i += 1
             my_str = file.readline()
+            self.line_number += 1
+
             if not my_str:
                 break
 
@@ -203,8 +214,7 @@ class PairParser:
 
         return adj_info
 
-    @staticmethod
-    def read_conjunction(file):
+    def read_conjunction(self, file):
         """
      :param file: mystemmed file to read from
      :return:
@@ -215,6 +225,8 @@ class PairParser:
         while True:
             distance += 1
             s = file.readline()
+            self.line_number += 1
+
             if not s:
                 break
 
@@ -254,11 +266,17 @@ class PairParser:
 
      :param in_filename: file, preprocessed with mystem with "-icln" options
      """
+        self.line_number = 0
         # opening mystemmed file to parse
         try:
             f = open(in_filename, 'r')
         except IOError:
             print('cannot open file ' + in_filename)
+
+        # delete this -----------
+        ferr = open('bad_lines_numbers.txt', 'a')
+        ferr.write(in_filename + '\n')
+        # -----------------------
 
         adj1_info = {'adj': ""}
 
@@ -300,6 +318,13 @@ class PairParser:
                     na1 = "не"
                 if adj2_info['neg'] == -1:
                     na2 = "не"
+
+                # delete this ------------------
+                if adj2_info['adj'] in ['хороший', 'плохой'] and adj1_info['adj'] in ['хороший', 'плохой'] \
+                        and conj_info['polarity'] * adj2_info['neg'] * adj1_info['neg'] == 1\
+                        and adj2_info['adj'] != adj1_info['adj']:
+                    ferr.write(str(self.line_number) + '\n')
+                # ------------------------------
                 self.add_pair(self.pairs_dict, ' '.join([na1, adj1_info['adj']]).strip(),
                               # strip is used to delete first space
                               ' '.join([na2, adj2_info['adj']]).strip(),
@@ -314,6 +339,7 @@ class PairParser:
             adj1_info = adj2_info
 
         f.close()
+        ferr.close()
 
 
 if __name__ == "__main__":
@@ -324,7 +350,7 @@ if __name__ == "__main__":
     pair_parser = PairParser()
     pair_parser.get_pairs(sys.argv[1])
 
-    name1 = 'out_pairs_no_neg/' + sys.argv[1].split('.')[0] + '_noneg.txt'
-    name2 = 'out_pairs_neg/' + sys.argv[1].split('.')[0] + '_neg.txt'
+    name1 = sys.argv[1].split('.')[0] + '_noneg.txt'
+    name2 = sys.argv[1].split('.')[0] + '_neg.txt'
     pair_parser.print_pairs_neg(name1)
     pair_parser.print_pairs_no_neg(name2)
