@@ -137,10 +137,10 @@ class PairParser:
      :param filename:  name of the file to print in
      """
         f = open(filename, 'w')
-		size = 0
-		for a1 in dict_to_print.keys():
-			size += len(dict_to_print[a1])
-		f.write(str(size) + '\n')
+        size = 0
+        for a1 in dict_to_print.keys():
+            size += len(dict_to_print[a1])
+        f.write(str(size) + '\n')
         for a1 in dict_to_print.keys():
             for a2 in dict_to_print[a1].keys():
                 f.write(' '.join([str(dict_to_print[a1][a2]), a1, a2, '\n']))
