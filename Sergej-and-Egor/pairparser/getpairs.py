@@ -297,8 +297,8 @@ class PairParser:
             print('cannot open file ' + in_filename)
 
         # delete this -----------
-        ferr = open('bad_lines_numbers.txt', 'a')
-        ferr.write(in_filename + '\n')
+        # ferr = open('temp/bad_lines_numbers.txt', 'a')
+        # ferr.write(in_filename + '\n')
         # -----------------------
 
         adj1_info = {'adj': ""}
