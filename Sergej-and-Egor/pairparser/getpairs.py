@@ -1,4 +1,6 @@
+# coding=utf-8
 __author__ = 'Egor Gorbunov'
+
 
 import sys
 
@@ -6,14 +8,16 @@ import sys
 def get_part_of_speech(string):
     d = {'SPRO': 'pronoun', 'PR': 'pretext', 'ADV': 'adverb', 'S': 'noun', 'V': 'verb', 'A': 'adjective'}
     spl_str = string.split('=')
-    if len(spl_str) > 1 and spl_str[1] in d:
-        return d[spl_str[1]]
+    if len(spl_str) > 1:
+        t = spl_str[1].split(',')[0]
+        if t in d:
+            return d[t]
     else:
         return ''
 
 
 def get_adjective(string):
-    """Checks, if given string stands for adjective
+    """Checks, if given string stands for adjecti>ve
 
      :param string: line from file, which was processed by mystem.
      :return: if string conforms to pattern: "%word%=A=|..." it return adjective (%word%),
@@ -54,10 +58,10 @@ def get_conjunction_polarity(string):
 
     spl_str = string.split('=')
 
-    if spl_str[0] in ['и', ',']:
+    if spl_str[0].strip('_') in ['и', ',']:
         return 1
 
-    if spl_str[0] in ['a', 'но', 'зато', 'или'] or 'хотя=PART=' in string:
+    if spl_str[0] in ['но', 'зато'] or 'хотя=PART=' in string:
         return -1
 
     return 0
@@ -74,9 +78,9 @@ def is_separator(string):
 def is_end_of_sentence(string):
     spl_str = string.split('_')
     spl_str = list(filter(''.__ne__, spl_str))
+    chars = set('.!?;')
     if len(spl_str) > 0:
-        if spl_str[0].count('.') or spl_str[0].count('!') or spl_str[0].count('?') \
-                or spl_str[0].count(';') or spl_str[0] == "\\n\n":
+        if any((c in chars) for c in spl_str[0]) or spl_str[0] == "\\n\n":
             return True
 
     return False
@@ -100,13 +104,27 @@ def get_gender(string):
     return -1
 
 
+def neg_ignored(string):
+    if is_separator(string):
+        return True
+
+    spl_str = string.split('=')
+
+    if spl_str[0] in ['очень', 'весьма', 'совсем', 'сильно',
+                      'вполне', 'вовсю', 'чуток'] \
+            or string.find('значительно') != -1 \
+            or string.find('особенно') != -1\
+            or string.find('особо') != -1:
+        return True
+
+    return False
+
+
 class PairParser:
     def __init__(self):
         self.pairs_dict = {}  # dictionary of dictionaries for pairs of adjectives
         self.pairs_no_neg = {}
         self.pairs_neg = {}
-
-        self.pair_info = {}  # how much that pair appear with negative polarity
 
         self.line_number = 0  # line number in current file
 
@@ -119,6 +137,10 @@ class PairParser:
      :param polarity: = 1 if adjectives conjunct positively
                       = -1 if adj. conjunct negatively
      """
+        #ignoring [хороший, плохой, 1]
+        # if adj1 in ['хороший', 'плохой'] and adj2 in ['хороший', 'плохой'] and polarity == 1:
+        #     print("hm.")
+        #     return
 
         if adj1 == adj2:
             return
@@ -131,7 +153,6 @@ class PairParser:
 
         if adj1 not in dict_to_add:
             dict_to_add[adj1] = {}
-            self.pair_info[adj1] = {}
             dict_to_add[adj1][adj2] = [0, 0]
         elif adj2 not in dict_to_add[adj1]:
             dict_to_add[adj1][adj2] = [0, 0]
@@ -199,7 +220,7 @@ class PairParser:
                 adj_info['verb_count'] += 1
             elif part == 'noun':
                 adj_info['noun_count'] += 1
-            elif part in ['adverb', 'pretext', 'pronoun'] or is_separator(my_str):
+            elif neg_ignored(my_str):
                 if i - neg_index == 1 and neg_index != -1:
                     neg_index += 1
             else:
@@ -219,8 +240,8 @@ class PairParser:
      :param file: mystemmed file to read from
      :return:
      """
-        conj_info = {'verb_count': 0, 'noun_count': 0, 'dist': 0, 'adj': "", 'gender': -1, 'polarity': 1, 'neg': 1}
-        distance = 0
+        conj_info = {'verb_count': 0, 'noun_count': 0, 'dist': 0, 'adj': "", 'gender': -1, 'polarity': 0, 'neg': 1}
+        distance = -1
         neg_index = -1
         while True:
             distance += 1
@@ -240,7 +261,7 @@ class PairParser:
                 conj_info['verb_count'] += 1
             elif part == 'noun':
                 conj_info['noun_count'] += 1
-            elif part in ['adverb', 'pretext', 'pronoun'] or is_separator(s):
+            elif neg_ignored(s):
                 if neg_index != -1:
                     neg_index += 1
 
@@ -254,10 +275,12 @@ class PairParser:
             p = get_conjunction_polarity(s)
             if p != 0:
                 conj_info['polarity'] = p
-            if p < 0:
                 break
 
         conj_info['dist'] = distance
+        if conj_info['polarity'] == 0:
+            conj_info['dist'] += 1000
+
         return conj_info
 
     def get_pairs(self, in_filename):
@@ -309,29 +332,26 @@ class PairParser:
             # adverbs, pronouns, pretext does not matter too. ('Плохое питание, зато, по-моему, очень хороший номер')
             if adj2_info['verb_count'] + conj_info['verb_count'] <= 0 \
                     and adj2_info['noun_count'] + conj_info['noun_count'] <= 0 \
-                    and adj2_info['dist'] + conj_info['dist'] <= 5 \
+                    and adj2_info['dist'] + conj_info['dist'] <= 6 \
                     and adj1_info['gender'] == adj2_info['gender'] \
                     and adj1_info['gender'] != -1:
-                na1 = ""
-                na2 = ""
-                if adj1_info['neg'] == -1:
-                    na1 = "не"
-                if adj2_info['neg'] == -1:
-                    na2 = "не"
 
+                # na1 = ""
+                # na2 = ""
+                # if adj1_info['neg'] == -1:
+                #     na1 = "не"
+                # if adj2_info['neg'] == -1:
+                #     na2 = "не"
                 # delete this ------------------
-                if adj2_info['adj'] in ['хороший', 'плохой'] and adj1_info['adj'] in ['хороший', 'плохой'] \
-                        and conj_info['polarity'] * adj2_info['neg'] * adj1_info['neg'] == 1\
-                        and adj2_info['adj'] != adj1_info['adj']:
-                    ferr.write(str(self.line_number) + '\n')
+                #if adj2_info['adj'] in ['хороший', 'плохой'] and adj1_info['adj'] in ['хороший', 'плохой'] \
+                #        and conj_info['polarity'] * adj2_info['neg'] * adj1_info['neg'] == 1\
+                #        and adj2_info['adj'] != adj1_info['adj']:
+                #    ferr.write(str(self.line_number) + '\n')
                 # ------------------------------
-                self.add_pair(self.pairs_dict, ' '.join([na1, adj1_info['adj']]).strip(),
-                              # strip is used to delete first space
-                              ' '.join([na2, adj2_info['adj']]).strip(),
-                              conj_info['polarity'])
-
-                self.add_pair(self.pairs_neg, ''.join([na1, adj1_info['adj']]),
-                              ''.join([na2, adj2_info['adj']]), conj_info['polarity'])
+                #self.add_pair(self.pairs_dict, ' '.join([na1, adj1_info['adj']]).strip(),
+                #              # strip is used to delete first space
+                #              ' '.join([na2, adj2_info['adj']]).strip(),
+                #              conj_info['polarity'])
 
                 self.add_pair(self.pairs_no_neg, adj1_info['adj'], adj2_info['adj'],
                               adj2_info['neg'] * adj1_info['neg'] * conj_info['polarity'])
@@ -350,7 +370,5 @@ if __name__ == "__main__":
     pair_parser = PairParser()
     pair_parser.get_pairs(sys.argv[1])
 
-    name1 = sys.argv[1].split('.')[0] + '_noneg.txt'
     name2 = sys.argv[1].split('.')[0] + '_neg.txt'
-    pair_parser.print_pairs_neg(name1)
     pair_parser.print_pairs_no_neg(name2)
