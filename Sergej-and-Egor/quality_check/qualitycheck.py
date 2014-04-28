@@ -76,9 +76,9 @@ for key in completeness_dict.keys():
 	else:
 		f2.write(key + ' ')
 		if completeness_dict[key] == new_dict[key]:
-			f2.write(1)
+			f2.write(str(1))
 		else:
-			f2.write(0)
+			f2.write(str(0))
 		f2.write('\n')
 f1.close()
 f2.close()
