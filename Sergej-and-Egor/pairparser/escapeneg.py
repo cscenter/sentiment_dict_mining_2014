@@ -63,6 +63,8 @@ def escape_from_neg(fnamein, fnameout):
             for word in spl_w:
                 my_dict.append(word)
 
+    transformed_name = 'results/transformed.txt'
+    tf = open(transformed_name, 'w')
     # generating new pairs
     fin = open(fnamein, 'r')
     for s in fin:
@@ -77,10 +79,12 @@ def escape_from_neg(fnamein, fnameout):
         neg = 1
         if a1[:2] == 'не':
             if a1[2:] in my_dict:
+                tf.write(a1 + '\n')
                 a1 = a1[2:]
                 neg *= -1
         if a2[:2] == 'не':
             if a2[2:] in my_dict:
+                tf.write(a2 + '\n')
                 a2 = a2[2:]
                 neg *= -1
         if neg == -1:
@@ -88,7 +92,14 @@ def escape_from_neg(fnamein, fnameout):
 
         add_pair(pairs_dict, a1, a2, p_pos, p_neg)
 
+    tf.close()
     fin.close()
+
+    data = set(open(transformed_name, 'r', encoding="utf-8").read().split("\n"))
+    tf = open(transformed_name, 'w')
+    for w in data:
+        tf.write(w + '\n')
+    tf.close()
 
     # writing all pairs to file
     f = open(fnameout, 'w')
