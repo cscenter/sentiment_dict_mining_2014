@@ -1,7 +1,0 @@
-###pairparser.py
-Script, which gets pairs of adjectives from given "mystemmed" with "-icnl" parameters file.
-Rules for pair selection:
-* max distance between adjectives == 6 elements (element - any word or any sequence of punctuation marks or spaces)
-* tho adjectives are positively connected if:
-** 
-
