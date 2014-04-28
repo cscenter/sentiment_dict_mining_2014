@@ -75,11 +75,7 @@ for key in new_dict.keys():
     elif key in big_dict and big_dict[key] == new_dict[key]:
         quality_value += 1
     elif key not in big_dict and key not in big_ext_dict:  # means, that we found a new word
-        p = 2
-        while p not in [1, -1, 0]:
-            print('Mark new word (1, -1 or 0) ' + key + ': ')
-            p = int(sys.stdin.readline())
-        big_ext_dict[key] = p
+        big_ext_dict[key] = 0
 
 print('Completeness value: ' + str(completeness_value) + ' => '
       + str(completeness_value * 100 / len(completeness_dict)) + '%')
@@ -87,18 +83,9 @@ print('Completeness value: ' + str(completeness_value) + ' => '
 print('Quality value: ' + str(quality_value) + ' => '
       + str(quality_value * 100 / len(big_dict)) + '%')
 
-f_pos = open('big_ext_pos.txt', 'w')
-f_neg = open('big_ext_neg.txt', 'w')
-f_neutral = open('big_ext_neutral.txt', 'w')
+f = open('big_ext_not_marked.txt', 'w')
 
 for key in big_ext_dict:
-    if big_ext_dict[key] == 0:
-        f_neutral.write(key + '\n')
-    if big_ext_dict[key] == -1:
-        f_neg.write(key + '\n')
-    if big_ext_dict[key] == 1:
-        f_pos.write(key + '\n')
+    f.write(key + '\n')
 
-f_pos.close()
-f_neg.close()
-f_neutral.close()
+f.close()
