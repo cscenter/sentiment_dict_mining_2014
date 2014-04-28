@@ -102,6 +102,7 @@ for (i in (1:length(l))) {
   big_mass_list[i] = list(l[[i]][ l[[i]]$neg < -min_abs_big_mass | l[[i]]$pos > min_abs_big_mass, ])
   big_mass_list[i] = list(big_mass_list[[i]][order(big_mass_list[[i]]$pos, decreasing=TRUE), ])
   print(big_mass_list[[i]])
+  print("---------------------------------------------------------------")
 }
 
 # ratio btw absolute values of pos and neg
@@ -144,16 +145,21 @@ for (i in (1:length(l))) {
   fit <- glm(neg_deg_list[[i]] ~ pos_deg_list[[i]])
   b <- fit$coefficients[1]
   a <- fit$coefficients[2]
-  plot(pos_deg_list[[i]], neg_deg_list[[i]], main = names(l)[i], xlab = "pos degree", ylab= "negative sum degree")
+  plot(pos_deg_list[[i]], neg_deg_list[[i]], main = names(l)[i], xlab = "pos degree", ylab= "negative sum degree",
+       ylim = c(0, 300),
+       xlim = c(0, 450))
   sq <- seq(0, max(pos_deg_list[[i]] + 30), 30)
   lines(sq, a * sq + b, col = 'red')
 }
 
 #normalizing weights
 nl = l
+
 for (i in (1:length(nl))) {
-  nl[[i]]$neg = nl[[i]]$neg / (-min(nl[[i]]$neg))
-  nl[[i]]$pos = nl[[i]]$pos / (max(nl[[i]]$pos))
+  max = max(l[[i]]$pos)
+  amin = -min(l[[i]]$neg)
+  nl[[i]]$neg = nl[[i]]$neg / amin
+  nl[[i]]$pos = nl[[i]]$pos / max
 }
 
 ndeg_list = list()
@@ -193,11 +199,77 @@ for (i in (1:length(l))) {
   fit <- glm(nneg_deg_list[[i]] ~ npos_deg_list[[i]])
   b <- fit$coefficients[1]
   a <- fit$coefficients[2]
-  plot(npos_deg_list[[i]], nneg_deg_list[[i]], main = names(l)[i], xlab = "pos degree", ylab= "negative sum degree")
+  plot(npos_deg_list[[i]], nneg_deg_list[[i]], main = names(l)[i], xlab = "pos degree", ylab= "negative sum degree", 
+       ylim = c(0, 300),
+       xlim = c(0, 450))
+  sq <- seq(0, max(npos_deg_list[[i]] + 30), 30)
+  lines(sq, a * sq + b, col = 'red')
+}
+
+#increasing neg weights by 50
+nli = l
+for (i in (1:length(nli))) {
+  nli[[i]]$neg = nli[[i]]$neg * 50
+}
+
+nipos_deg_list = list()
+for (i in (1:length(nli))) {
+  cur_deg = rep(0, length(dict_list[[i]]))
+  for (j in (1:length(dict_list[[i]]))) {
+    w = dict_list[[i]][j]
+    cur_deg[j] = get_sum_pos_deg(w, nli[[i]])
+  }
+  nipos_deg_list[i] = list(cur_deg)
+}
+
+nineg_deg_list = list()
+for (i in (1:length(nl))) {
+  cur_deg = rep(0, length(dict_list[[i]]))
+  for (j in (1:length(dict_list[[i]]))) {
+    w = dict_list[[i]][j]
+    cur_deg[j] = get_sum_neg_deg(w, nli[[i]])
+  }
+  nineg_deg_list[i] = list(cur_deg)
+}
+
+#pos on neg degree for multiplied neg weights
+max = Inf
+par(mfrow = c(2, 2))
+for (i in (1:length(l))) {
+  fit <- glm(nineg_deg_list[[i]] ~ nipos_deg_list[[i]])
+  b <- fit$coefficients[1]
+  a <- fit$coefficients[2]
+  plot(nipos_deg_list[[i]], nineg_deg_list[[i]], main = names(l)[i], xlab = "pos degree", ylab= "negative sum degree",
+       ylim = c(0, 300),
+       xlim = c(0, 450))
   sq <- seq(0, max(npos_deg_list[[i]] + 30), 30)
   lines(sq, a * sq + b, col = 'red')
 }
 
 
-
-
+fit1 <- glm(neg_deg_list[[4]] ~ pos_deg_list[[4]])
+b <- fit1$coefficients[1]
+a <- fit1$coefficients[2]
+plot(pos_deg_list[[4]], neg_deg_list[[4]], col = 'green', xlab = "pos degree", ylab= "negative sum degree",
+      ylim = c(0, 300),
+      xlim = c(0, 450))
+legend('topleft', c('|p| - |n| metric', '|p| - |n|*50 metric', '|p|/max(pos) - |n|/max(|neg|) metric'), 
+       lty=1, col=c('green', 'blue', 'red'), bty='n', cex=.75)
+sq <- seq(0, max(pos_deg_list[[i]] + 30), 30)
+lines(sq, a * sq + b, col = 'green', lwd=2)
+fit2 <- glm(nneg_deg_list[[4]] ~ npos_deg_list[[4]])
+b <- fit2$coefficients[1]
+a <- fit2$coefficients[2]
+lines(npos_deg_list[[4]], nneg_deg_list[[4]], col = 'blue', xlab = "pos degree", ylab= "negative sum degree",
+      ylim = c(0, 300),
+      xlim = c(0, 450), type = 'p')
+sq <- seq(0, max(npos_deg_list[[i]] + 30), 30)
+lines(sq, a * sq + b, col = 'blue', lwd=2)
+fit3 <- glm(nineg_deg_list[[4]] ~ nipos_deg_list[[4]])
+b <- fit3$coefficients[1]
+a <- fit3$coefficients[2]
+lines(nipos_deg_list[[4]], nineg_deg_list[[4]], col = 'red', xlab = "pos degree", ylab= "negative sum degree",
+     ylim = c(0, 300),
+     xlim = c(0, 450), type = 'p')
+sq <- seq(0, max(npos_deg_list[[i]] + 30), 30)
+lines(sq, a * sq + b, col = 'red', lwd=2)
