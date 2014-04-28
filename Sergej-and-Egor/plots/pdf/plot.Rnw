@@ -1,0 +1,239 @@
+\documentclass[11pt]{article}
+\usepackage{graphicx, subfig}
+\usepackage[russian]{babel}
+\usepackage[utf8]{inputenc}
+\usepackage{amsmath}
+\usepackage[margin=0.57in]{geometry}
+\usepackage{listings}
+\usepackage{inconsolata}
+\usepackage{caption}
+\usepackage{longtable}
+
+\setlength{\parindent}{0pt}
+
+<<setup, echo = FALSE, results= 'hide', message = FALSE>>=
+  require(xtable)
+  options(width=90)
+  library("xtable")
+@
+
+\newcommand*\conj[1]{\bar{#1}}
+\newcommand*\mean[1]{\bar{#1}}
+
+\begin{document}
+\begin{center}
+{\bf \Large Графики и статитстики\\}
+\end{center}
+Рассморивается 2 набора пар:
+\begin{enumerate}
+\item $pairs_no_neg4.txt$ - прилагательные без удаления приставок "не"
+\item $en_pairs(4).txt$ - по возможности приставка "не" удалена.
+\end{enumerate}
+<<echo=FALSE>>=
+spl = strsplit(getwd(), '/')
+nwd = paste(spl[[1]][1:(length(spl[[1]]) - 2)], collapse = '/')
+nwd = paste(nwd, "pairparser/results", sep = "/")
+
+#n - pairs, where prefix "не" exists
+#en - no "не" prefix
+
+l <- list(n4 = read.table(paste(nwd, "pairs_no_neg(4).txt", sep = "/"), skip = 1, stringsAsFactors=FALSE, encoding="UTF-8"),
+          en4 = read.table(paste(nwd, "en_pairs(4).txt", sep = "/"), skip = 1, stringsAsFactors=FALSE, encoding="UTF-8"))
+for (i in (1:length(l))) {
+  colnames(l[[i]]) <- c("pos", "neg", "a1", "a2")
+}
+
+get_degree <- function(word, df) {
+  return(nrow(df[ df$a1 == word| df$a2 == word, ]))
+}
+
+get_sum_pos_deg <- function(word, df) {
+  return(nrow(df[ (df$a1 == word| df$a2 == word) & df$pos + df$neg > 0, ]))
+}
+
+get_sum_neg_deg <- function(word, df) {
+  return(nrow(df[ (df$a1 == word| df$a2 == word) & df$pos + df$neg < 0, ]))
+}
+
+get_pos_val <- function(word, df) {
+  return(sum(df[ df$a1 == word| df$a2 == word, "pos"]))
+}
+
+get_neg_val <- function(word, df) {
+  return(-sum(df[ df$a1 == word| df$a2 == word, "neg"]))
+}
+@
+Степени вершины "хороший" для 2-х наборов пар.
+<<echo=FALSE>>=
+#degree of node "хороший"
+for (i in (1:length(l))) {
+  print(get_degree("хороший", l[[i]]))
+}
+@
+Степени вершины "плохой" для 2-х наборов пар.
+<<echo=FALSE>>=
+#degree of node "плохой"
+for (i in (1:length(l))) {
+  print(get_degree("плохой", l[[i]]))
+}
+@
+
+<<echo=FALSE>>=
+# edges with a big mass
+min_abs_big_mass = 100
+@
+
+<<echo=FALSE>>=
+dict_list = list()
+#dictionaries
+for (i in (1:length(l))) {
+  dict_list[i] = list(unique(append(unique(l[[i]][['a1']]), unique(l[[i]][['a2']]))))
+  print(length(dict_list[[i]]))
+}
+
+degrees_list = list()
+for (i in (1:length(l))) {
+  cur_deg = rep(0, length(dict_list[[i]]))
+  for (j in (1:length(dict_list[[i]]))) {
+    w = dict_list[[i]][j]
+    cur_deg[j] = get_degree(w, l[[i]])
+  }
+  degrees_list[i] = list(cur_deg)
+}
+
+pos_deg_list = list()
+for (i in (1:length(l))) {
+  cur_deg = rep(0, length(dict_list[[i]]))
+  for (j in (1:length(dict_list[[i]]))) {
+    w = dict_list[[i]][j]
+    cur_deg[j] = get_sum_pos_deg(w, l[[i]])
+  }
+  pos_deg_list[i] = list(cur_deg)
+}
+
+neg_deg_list = list()
+for (i in (1:length(l))) {
+  cur_deg = rep(0, length(dict_list[[i]]))
+  for (j in (1:length(dict_list[[i]]))) {
+    w = dict_list[[i]][j]
+    cur_deg[j] = get_sum_neg_deg(w, l[[i]])
+  }
+  neg_deg_list[i] = list(cur_deg)
+}
+@
+<<echo=FALSE, results='asis'>>=
+min = 30
+@
+Гистограммы степеней вершин $> \Sexpr{min}$\\
+<<echo=FALSE, fig.align='center', fig.height=4, fig.width=7>>=
+par(mfrow = c(1, 2))
+for (i in (1:length(l))) {
+  h <- hist(degrees_list[[i]][c(which(degrees_list[[i]] > min))], breaks=100, main = names(l)[i], 
+       xlab = paste("nodes degrees >", as.character(min)))
+}
+@
+Зависимость числа рёбер с положительной суммой от числа рёбер с отрицательной суммой. (Каждая точка характеризует вершину).\\
+<<echo=FALSE, fig.align='center', fig.height=4, fig.width=7>>=
+#pos on neg degree
+max = Inf
+par(mfrow = c(1, 2))
+for (i in (1:length(l))) {
+  fit <- glm(neg_deg_list[[i]] ~ pos_deg_list[[i]])
+  b <- fit$coefficients[1]
+  a <- fit$coefficients[2]
+  plot(pos_deg_list[[i]], neg_deg_list[[i]], main = names(l)[i], xlab = "pos degree", ylab= "negative sum degree",
+       ylim = c(0, 300),
+       xlim = c(0, 450))
+  sq <- seq(0, max(pos_deg_list[[i]] + 30), 30)
+  lines(sq, a * sq + b, col = 'red')
+}
+@
+<<echo=FALSE, fig.align='center'>>=
+#normalizing weights
+nl = l
+
+for (i in (1:length(nl))) {
+  max = max(l[[i]]$pos)
+  amin = -min(l[[i]]$neg)
+  nl[[i]]$neg = nl[[i]]$neg / amin
+  nl[[i]]$pos = nl[[i]]$pos / max
+}
+
+npos_deg_list = list()
+for (i in (1:length(nl))) {
+  cur_deg = rep(0, length(dict_list[[i]]))
+  for (j in (1:length(dict_list[[i]]))) {
+    w = dict_list[[i]][j]
+    cur_deg[j] = get_sum_pos_deg(w, nl[[i]])
+  }
+  npos_deg_list[i] = list(cur_deg)
+}
+
+nneg_deg_list = list()
+for (i in (1:length(nl))) {
+  cur_deg = rep(0, length(dict_list[[i]]))
+  for (j in (1:length(dict_list[[i]]))) {
+    w = dict_list[[i]][j]
+    cur_deg[j] = get_sum_neg_deg(w, nl[[i]])
+  }
+  nneg_deg_list[i] = list(cur_deg)
+}
+@
+Зависимость числа рёбер с положительной суммой от числа рёбер с отрицательной суммой для нормализованных весов. (Каждая точка характеризует вершину):
+\[|pos_i|_n = |\frac{|pos_i|}{max{pos}} + \frac{|neg_i|}{-min{neg}}|\], тут |p| - количество вершин уд. условию p.\\
+<<echo=FALSE, fig.align='center', fig.height=4, fig.width=7>>=
+#pos on neg degree for normalized weights
+max = Inf
+par(mfrow = c(1, 2))
+for (i in (1:length(l))) {
+  fit <- glm(nneg_deg_list[[i]] ~ npos_deg_list[[i]])
+  b <- fit$coefficients[1]
+  a <- fit$coefficients[2]
+  plot(npos_deg_list[[i]], nneg_deg_list[[i]], main = names(l)[i], xlab = "pos degree", ylab= "negative sum degree", 
+       ylim = c(0, 300),
+       xlim = c(0, 450))
+  sq <- seq(0, max(npos_deg_list[[i]] + 30), 30)
+  lines(sq, a * sq + b, col = 'red')
+}
+@
+На одном графике:\\
+<<echo=FALSE>>=
+fit1 <- glm(neg_deg_list[[2]] ~ pos_deg_list[[2]])
+b <- fit1$coefficients[1]
+a <- fit1$coefficients[2]
+plot(pos_deg_list[[2]], neg_deg_list[[2]], col = 'green', xlab = "pos degree", ylab= "negative sum degree",  ylim = c(0, 300), xlim = c(0, 450))
+legend('topleft', c('|p| - |n| metric', '|p|/max(pos) - |n|/max(|neg|) metric'), 
+       lty=1, col=c('green', 'red'), bty='n', cex=.75)
+sq <- seq(0, max(npos_deg_list[[i]] + 30), 30)
+lines(sq, a * sq + b, col = 'green', lwd=2)
+fit3 <- glm(nneg_deg_list[[2]] ~ npos_deg_list[[2]])
+b <- fit3$coefficients[1]
+a <- fit3$coefficients[2]
+lines(npos_deg_list[[2]], nneg_deg_list[[2]], col = 'red', xlab = "pos degree", ylab= "negative sum degree",
+     ylim = c(0, 300),
+     xlim = c(0, 450), type = 'p')
+sq <- seq(0, max(npos_deg_list[[i]] + 30), 30)
+lines(sq, a * sq + b, col = 'red', lwd=2)
+@
+
+<<echo=FALSE, results='asis'>>=
+buf_df <- as.data.frame(matrix(c(max(l[[1]]$pos), max(l[[2]]$pos), -min(l[[1]]$neg), min(l[[2]]$neg)), 2, 2))
+colnames(buf_df) <- c('max pos', '|min neg|')
+rownames(buf_df) <- c('n', 'en')
+xtable(buf_df)
+@
+
+2 таблицы (для 2-х наборов) рёбер с массой положительной или отрицательной составляющей более 100.\\
+<<echo=FALSE, results='asis'>>=
+library(xtable)
+big_mass_list = list()
+for (i in (1:length(l))) {
+  big_mass_list[i] = list(l[[i]][ l[[i]]$neg < -min_abs_big_mass | l[[i]]$pos > min_abs_big_mass, ])
+  big_mass_list[i] = list(big_mass_list[[i]][order(big_mass_list[[i]]$pos, decreasing=TRUE), ])
+  x.big <- xtable(big_mass_list[[i]])
+  print(x.big, tabular.environment='longtable',floating=FALSE, table.placement="")
+
+}
+@
+
+\end{document}
