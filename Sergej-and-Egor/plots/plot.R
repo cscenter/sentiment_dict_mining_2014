@@ -7,9 +7,7 @@ nwd = paste(nwd, "pairparser/results", sep = "/")
 #n - pairs, where prefix "не" exists
 #en - no "не" prefix
 
-l <- list(n2 = read.table(paste(nwd, "all_pairs_no_neg(2).txt", sep = "/"), skip = 1, stringsAsFactors=FALSE),
-          en2 = read.table(paste(nwd, "en_pairs_no_neg(2).txt", sep = "/"), skip = 1, stringsAsFactors=FALSE),
-          n4 = read.table(paste(nwd, "pairs_no_neg(4).txt", sep = "/"), skip = 1, stringsAsFactors=FALSE),
+l <- list(n4 = read.table(paste(nwd, "pairs_no_neg(4).txt", sep = "/"), skip = 1, stringsAsFactors=FALSE),
           en4 = read.table(paste(nwd, "en_pairs(4).txt", sep = "/"), skip = 1, stringsAsFactors=FALSE))
 for (i in (1:length(l))) {
   colnames(l[[i]]) <- c("pos", "neg", "a1", "a2")
@@ -83,13 +81,13 @@ for (i in (1:length(l))) {
 }
 
 #histograms for degrees
-par(mfrow = c(2, 2))
+par(mfrow = c(1, 1))
 for (i in (1:length(l))) {
   hist(degrees_list[[i]], breaks=100, main = names(l)[i], xlab = "nodes degrees")
 }
 
 min = 30
-par(mfrow = c(2, 2))
+par(mfrow = c(1, 1))
 for (i in (1:length(l))) {
   h <- hist(degrees_list[[i]][c(which(degrees_list[[i]] > min))], breaks=100, main = names(l)[i], 
        xlab = paste("nodes degrees >", as.character(min)))
@@ -103,25 +101,6 @@ for (i in (1:length(l))) {
   big_mass_list[i] = list(big_mass_list[[i]][order(big_mass_list[[i]]$pos, decreasing=TRUE), ])
   print(big_mass_list[[i]])
   print("---------------------------------------------------------------")
-}
-
-# ratio btw absolute values of pos and neg
-ratios_list = list()
-for (i in (1:length(l))) {
-  cur_rat = rep(0, length(dict_list[[i]]))
-  for (j in (1:length(dict_list[[i]]))) {
-    w = dict_list[[i]][j]
-    cur_rat [j] = get_pos_val(w, l[[i]]) / get_neg_val(w, l[[i]])
-  }
-  ratios_list[i] = list(cur_rat)
-}
-
-#not inf. ratios
-max = Inf
-par(mfrow = c(2, 2))
-for (i in (1:length(l))) {
-  h <- hist(ratios_list[[i]][c(which(ratios_list[[i]] < max))], breaks=130, main = names(l)[i], 
-            xlab = paste("pos/neg ratio <", as.character(max)))
 }
 
 #degree on pos degree
