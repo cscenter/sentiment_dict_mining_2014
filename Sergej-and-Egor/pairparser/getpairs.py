@@ -58,13 +58,25 @@ def get_conjunction_polarity(string):
 
     spl_str = string.split('=')
 
-    if spl_str[0].strip('_') in ['и', ',']:
+    if spl_str[0].strip('_\n') in ['и', ',']:
         return 1
 
     if spl_str[0] in ['но', 'зато'] or 'хотя=PART=' in string:
         return -1
 
     return 0
+
+
+def get_conjunction(string):
+    spl_str = string.split('=')
+
+    if spl_str[0].strip('_\n') in ['и', ',']:
+        return spl_str[0].strip('_\n')
+
+    if spl_str[0] in ['но', 'зато'] or 'хотя=PART=' in string:
+        return spl_str[0]
+
+    return ""
 
 
 def is_separator(string):
@@ -111,7 +123,7 @@ def neg_ignored(string):
     spl_str = string.split('=')
 
     if spl_str[0] in ['очень', 'весьма', 'совсем', 'сильно',
-                      'вполне', 'вовсю', 'чуток'] \
+                      'вполне', 'вовсю', 'чуток', 'слишком'] \
             or string.find('значительно') != -1 \
             or string.find('особенно') != -1\
             or string.find('особо') != -1:
@@ -137,10 +149,9 @@ class PairParser:
      :param polarity: = 1 if adjectives conjunct positively
                       = -1 if adj. conjunct negatively
      """
-        #ignoring [хороший, плохой, 1]
-        # if adj1 in ['хороший', 'плохой'] and adj2 in ['хороший', 'плохой'] and polarity == 1:
-        #     print("hm.")
-        #     return
+        # ignoring [хороший, плохой, 1]
+        if adj1 in ['хороший', 'плохой'] and adj2 in ['хороший', 'плохой'] and polarity == 1:
+            return
 
         if adj1 == adj2:
             return
@@ -243,6 +254,7 @@ class PairParser:
         conj_info = {'verb_count': 0, 'noun_count': 0, 'dist': 0, 'adj': "", 'gender': -1, 'polarity': 0, 'neg': 1}
         distance = -1
         neg_index = -1
+        comma_flag = False
         while True:
             distance += 1
             s = file.readline()
@@ -273,11 +285,26 @@ class PairParser:
                 break
 
             p = get_conjunction_polarity(s)
-            if p != 0:
+            if p < 0:
                 conj_info['polarity'] = p
                 break
 
+            if p > 0:
+                cur_conj = get_conjunction(s)
+                if cur_conj in [',']:
+                    if comma_flag:
+                        comma_flag = False
+                        break
+                    comma_flag = True
+                else:
+                    conj_info['polarity'] = p
+                    break
+
         conj_info['dist'] = distance
+
+        if comma_flag and conj_info['polarity'] == 0:
+            conj_info['polarity'] = 1
+
         if conj_info['polarity'] == 0:
             conj_info['dist'] += 1000
 
@@ -359,7 +386,7 @@ class PairParser:
             adj1_info = adj2_info
 
         f.close()
-        ferr.close()
+        # ferr.close()
 
 
 if __name__ == "__main__":
