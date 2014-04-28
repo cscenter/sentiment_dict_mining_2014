@@ -246,7 +246,7 @@ for (i in (1:length(l))) {
   lines(sq, a * sq + b, col = 'red')
 }
 
-
+par(mfrow = c(1, 1))
 fit1 <- glm(neg_deg_list[[4]] ~ pos_deg_list[[4]])
 b <- fit1$coefficients[1]
 a <- fit1$coefficients[2]
