@@ -7,6 +7,7 @@
 \usepackage{listings}
 \usepackage{caption}
 \usepackage{longtable}
+\usepackage{lscape}
 
 \setlength{\parindent}{0pt}
 
@@ -144,18 +145,51 @@ plot(which(nsums$w %in% pos_dict), nsums[(nsums$word %in% pos_dict == TRUE), 2],
 lines(which(nsums$w %in% neg_dict), nsums[(nsums$word %in% neg_dict == TRUE), 2], col = 'red', type='p')
 @
 
-<<>>=
+<<echo=FALSE>>=
 fsums = sums
 fsums$s = factor(fsums$s)
 lvls = levels(fsums$s)
 counts = matrix(rep(0, 3 * length(lvls)), ncol = 3)
+counts[, 1] = as.numeric(lvls)
+
+cwords = list(list(), length = length(lvls))
 for (i in 1:length(lvls)) {
   buf = fsums[fsums$s == lvls[i], ]
-  counts[i, 1] = nrow(buf[buf$word %in% pos_dict, ])
-  counts[i, 2] = nrow(buf) - counts[i, 1]
+  cpos <- buf[buf$word %in% pos_dict, 'word']
+  cneg <- buf[buf$word %in% neg_dict, 'word']
+  cur = list(lvl1 = lvls[i], pos = cpos,neg = cneg)
+  cwords[[i]] = cur
+  counts[i, 2] = nrow(buf[buf$word %in% pos_dict, ]) # pos
+  counts[i, 3] = nrow(buf[buf$word %in% neg_dict, ]) # neg
 }
 
 #plotting
-plot(0, 0, col = 'white', xlim=c(0, length(lvls)), ylim = c(-5000, 5000))
+#cutting lvls
+top = 0
+for (i in 1:length(lvls)) {
+  if (counts[i, 2] != 0) {
+    top = i
+    break
+  }
+}
+bottom  = length(lvls)
+for (i in 0:(length(lvls) - 1)) {
+  if (counts[length(lvls) - i, 3] != 0) {
+    bottom = length(lvls) - i
+    break
+  }
+}
+top = 50
+bottom = 95
+cfp = counts[top:bottom, ]
+plot(0, 0, col = 'white', xlim=c(0, dim(cfp)[1]), ylim = c(cfp[1, 1], cfp[dim(cfp)[1], 1]), main = "pos and neg ratio for levels")
+for (i in 1:dim(cfp)[1]) {
+  py = cfp[i, 1] * cfp[i, 2] / (cfp[i, 2] + cfp[i, 3])
+  rect(i - 1, 0, i, py, col = 'green')
+  rect(i - 1, py, i, cfp[i, 1], col='red')
+}
+for (i in (77:83)) {
+  print(cwords[[i]])
+}
 @
 \end{document}
