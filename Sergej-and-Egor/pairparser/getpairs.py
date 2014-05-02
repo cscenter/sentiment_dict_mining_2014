@@ -24,7 +24,7 @@ def get_adjective(string):
               if string does not, function returns empty str. ("")
      """
     spl_str = string.split('=')
-    x = string.count("=A=")
+    x = string.count("=A")
     y = string.count("|") + 1
     if x == y:
         return spl_str[0].strip('+- \n  0987654321!*/,?~')
@@ -88,6 +88,8 @@ def is_separator(string):
 
 
 def is_end_of_sentence(string):
+    if 'а' <= string[0] <= 'я':
+        return False
     spl_str = string.split('_')
     spl_str = list(filter(''.__ne__, spl_str))
     chars = set('.!?;')

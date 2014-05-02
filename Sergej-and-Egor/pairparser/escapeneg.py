@@ -24,7 +24,7 @@ def add_pair(dict_to_add, adj1, adj2, p_pos, p_neg):
     dict_to_add[adj1][adj2][1] += p_neg
 
 
-def escape_from_neg(fnamein, fnameout):
+def escape_from_neg(fnamein, fnameout, ftransformed):
     my_dict = []  # dictionary with words, which appeared with 'не' at the beginning and exist (in a real world)
     pairs_dict = {}  # dictionary for pairs.
 
@@ -63,8 +63,7 @@ def escape_from_neg(fnamein, fnameout):
             for word in spl_w:
                 my_dict.append(word)
 
-    transformed_name = 'results/transformed.txt'
-    tf = open(transformed_name, 'w')
+    tf = open(ftransformed, 'w')
     # generating new pairs
     fin = open(fnamein, 'r')
     for s in fin:
@@ -95,8 +94,8 @@ def escape_from_neg(fnamein, fnameout):
     tf.close()
     fin.close()
 
-    data = set(open(transformed_name, 'r', encoding="utf-8").read().split("\n"))
-    tf = open(transformed_name, 'w')
+    data = set(open(ftransformed, 'r', encoding="utf-8").read().split("\n"))
+    tf = open(ftransformed, 'w')
     for w in data:
         tf.write(w + '\n')
     tf.close()
@@ -118,13 +117,12 @@ def escape_from_neg(fnamein, fnameout):
 
 
 if __name__ == "__main__":
-    if len(sys.argv) < 3:
+    if len(sys.argv) < 4:
         sys.stderr.write('ERROR: Bad arguments')
         sys.exit(1)
 
     # first arg - file with pairs in form [%m% %n% %adj1% %adj2%], m - number of pos. conj; n - number of neg. conj.
     # second arg - where to write
+    # third arg - filename for file with transformed adjectives (with не)
 
-    escape_from_neg(sys.argv[1], sys.argv[2])
-
-
+    escape_from_neg(sys.argv[1], sys.argv[2], sys.argv[3])
