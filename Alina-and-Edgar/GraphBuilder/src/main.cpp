@@ -90,7 +90,7 @@ int main(int argc, char** argv) {
 			std :: map<std :: string, std :: pair<int, int> > :: iterator v_it;
 			ofs << it->first << ": ";
 			for (v_it = it->second.begin(); v_it != it->second.end(); ++v_it) {
-				ofs << v_it->first << ": " << v_it->second.first << ", " << v_it->second.second << " ";
+				ofs << v_it->first << " " << v_it->second.first << " " << v_it->second.second << "; ";
 			}
 			ofs << std :: endl;
 		}
