@@ -181,6 +181,7 @@ void analyze(vector<string> seed_pos, vector<string> seed_neg, int (*func)(set<i
     		if (!add_vertex(&Result_neg, &Result_pos, &Candidate_neg, (*func)))
     			break;
     	}
+
     	step = 1 - step;
     	if (Candidate_pos.size() == 0 && Candidate_neg.size() == 0)
     		break;
@@ -195,7 +196,7 @@ int main(int argc, char* argv[])
 {
     if (argc != 4)
     {        
-        cerr << "Usage: GraphAnalyzer.exe input_file pos_file neg_file" << endl;    
+        cerr << "Usage: GraphAnalyzer.exe edges_file pos_file neg_file" << endl;    
     	return 0;
     }
 
@@ -217,7 +218,7 @@ int main(int argc, char* argv[])
 	vector <string> seed_neg;
 	seed_neg.push_back("плохой");
 	
-	analyze(seed_pos, seed_neg, the_most_heavy);
+	analyze(seed_pos, seed_neg, the_sum);
 
 	return 0;
 }
