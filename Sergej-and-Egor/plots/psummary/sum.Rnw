@@ -1,0 +1,189 @@
+\documentclass[11pt]{article}
+\usepackage{graphicx, subfig}
+\usepackage[russian]{babel}
+\usepackage[utf8]{inputenc}
+\usepackage{amsmath}
+\usepackage[margin=0.57in]{geometry}
+\usepackage{listings}
+\usepackage{caption}
+\usepackage{longtable}
+
+\setlength{\parindent}{0pt}
+
+<<setup, echo = FALSE, results='hide', message = FALSE>>=
+  require(xtable)
+  options(width=90)
+  library("xtable")
+@
+
+\newcommand*\conj[1]{\bar{#1}}
+\newcommand*\mean[1]{\bar{#1}}
+
+\begin{document}
+\begin{center}
+{\bf \Large Summary\\}
+\end{center}
+<<echo=FALSE>>=
+spl = strsplit(getwd(), '/')
+nwd = paste(spl[[1]][1:(length(spl[[1]]) - 2)], collapse = '/')
+nwd = paste(nwd, "pairparser/results", sep = "/")
+
+get_degree <- function(word, df) {
+  return(nrow(df[ df$a1 == word| df$a2 == word, ]))
+}
+
+get_sum_pos_deg <- function(word, df) {
+  return(nrow(df[ (df$a1 == word| df$a2 == word) & df$pos + df$neg > 0, ]))
+}
+
+get_sum_neg_deg <- function(word, df) {
+  return(nrow(df[ (df$a1 == word| df$a2 == word) & df$pos + df$neg < 0, ]))
+}
+
+get_pos_val <- function(word, df) {
+  return(sum(df[ df$a1 == word| df$a2 == word, "pos"]))
+}
+
+get_neg_val <- function(word, df) {
+  return(-sum(df[ df$a1 == word| df$a2 == word, "neg"]))
+}
+@
+Считываем данные:
+<<>>=
+fname = "en_pairs(5).txt"
+df = read.table(paste(nwd, fname, sep = "/"), skip = 1, stringsAsFactors=FALSE, encoding="UTF-8")
+colnames(df) <- c("pos", "neg", "a1", "a2")
+@
+<<echo=FALSE, results='asis'>>=
+#degree of node "хороший"
+hor_deg = get_degree("хороший", df)
+#degree of node "плохой"
+ploh_deg = get_degree("плохой", df)
+@
+Степени вершины "хороший": \Sexpr{hor_deg} \\
+Степени вершины "плохой": \Sexpr{ploh_deg} \\
+<<echo=FALSE>>=
+# edges with a big mass
+min_abs_big_mass = 100
+@
+
+<<echo=FALSE>>=
+#dictionaries
+dict = unique(append(unique(df[['a1']]), unique(df[['a2']])))
+dict_len = length(dict)
+@
+Всего слов (прилагательных): \Sexpr{dict_len} \\
+
+<<echo=FALSE>>=
+degrees = rep(0, dict_len)
+for (j in (1:dict_len)) {
+  w = dict[j]
+  degrees[j] = get_degree(w, df)
+}
+
+pos_degrees = rep(0, dict_len)
+for (j in (1:dict_len)) {
+  w = dict[j]
+  pos_degrees[j] = get_sum_pos_deg(w, df)
+}
+
+neg_degrees = rep(0, dict_len)
+for (j in (1:dict_len)) {
+  w = dict[j]
+  neg_degrees[j] = get_sum_neg_deg(w, df)
+}
+@
+<<echo=FALSE, results='asis'>>=
+min = 30
+@
+Гистограммы степеней вершин $> \Sexpr{min}$\\
+<<echo=FALSE, fig.align='center', fig.height=4, fig.width=7>>=
+hist(degrees[c(which(degrees > min))], breaks=100, main = fname, 
+     xlab = paste("nodes degrees >", as.character(min)))
+@
+Зависимость числа рёбер с положительной суммой от числа рёбер с отрицательной суммой. (Каждая точка характеризует вершину).\\
+<<echo=FALSE, fig.align='center', fig.height=4, fig.width=7>>=
+#pos on neg degree
+fit <- glm(neg_degrees ~ pos_degrees)
+b <- fit$coefficients[1]
+a <- fit$coefficients[2]
+plot(pos_degrees, neg_degrees, main = fname, xlab = "pos degree", ylab= "negative sum degree",
+     ylim = c(0, 300),
+     xlim = c(0, 450))
+sq <- seq(0, max(pos_degrees + 30), 2)
+lines(sq, a * sq + b, col = 'red')
+@
+<<echo=FALSE, fig.align='center', results='asis'>>=
+#normalizing weights
+max = max(df$pos)
+amin = -min(df$neg)
+ndf = df
+ndf$neg = df$neg / amin
+ndf$pos = df$pos / max
+@
+нормализуем веса.\\
+Отрицательный вес ребра длеится на: \Sexpr{amin}\\
+Положительный вес ребра длеится на: \Sexpr{max}\\
+<<echo=FALSE, fig.align='center'>>=
+ndegrees = rep(0, dict_len)
+for (j in (1:dict_len)) {
+  w = dict[j]
+  ndegrees[j] = get_degree(w, ndf)
+}
+
+npos_degrees = rep(0, dict_len)
+for (j in (1:dict_len)) {
+  w = dict[j]
+  npos_degrees[j] = get_sum_pos_deg(w, ndf)
+}
+
+nneg_degrees = rep(0, dict_len)
+for (j in (1:dict_len)) {
+  w = dict[j]
+  nneg_degrees[j] = get_sum_neg_deg(w, ndf)
+}
+@
+Зависимость числа рёбер с положительной суммой от числа рёбер с отрицательной суммой для нормализованных весов. (Каждая точка характеризует вершину):
+\[|pos_i|_n = |\frac{|pos_i|}{max{pos}} + \frac{|neg_i|}{-min{neg}}|\], тут |p| - количество вершин уд. условию p.\\
+<<echo=FALSE, fig.align='center', fig.height=4, fig.width=7>>=
+#pos on neg degree for normalized weights
+nfit <- glm(nneg_degrees ~ npos_degrees)
+b <- fit$coefficients[1]
+a <- fit$coefficients[2]
+plot(npos_degrees, nneg_degrees, main = fname, xlab = "pos degree", ylab= "negative sum degree",
+     ylim = c(0, 300),
+     xlim = c(0, 450))
+sq <- seq(0, max(npos_degrees + 30), 2)
+lines(sq, a * sq + b, col = 'red')
+@
+На одном графике:\\
+<<echo=FALSE>>=
+b <- fit$coefficients[1]
+a <- fit$coefficients[2]
+plot(pos_degrees, neg_degrees, col = 'green', xlab = "pos degree", ylab= "negative sum degree",  ylim = c(0, 300), xlim = c(0, 450))
+sq <- seq(0, max(npos_degrees + 30), 2)
+lines(sq, a * sq + b, col = 'green', lwd=2)
+
+b <- nfit$coefficients[1]
+a <- nfit$coefficients[2]
+lines(npos_degrees, nneg_degrees, col = 'red', xlab = "pos degree", ylab= "negative sum degree",
+     ylim = c(0, 300),
+     xlim = c(0, 450), type = 'p')
+sq <- seq(0, max(npos_degrees + 30), 2)
+lines(sq, a * sq + b, col = 'red', lwd=2)
+
+legend('topleft', c('|p| - |n| metric', '|p|/max(pos) - |n|/max(|neg|) metric'), 
+       lty=1, col=c('green', 'red'), bty='n', cex=.75)
+@
+Таблица с рёбрами: (веса по модулю > 100)
+<<echo=FALSE, results='asis'>>=
+min_abs_big_mass = 100
+library(xtable)
+big_mass_list= df[ df$neg < - min_abs_big_mass | df$pos > min_abs_big_mass, ]
+big_mass_list = big_mass_list[order(big_mass_list$pos, decreasing=TRUE), ]
+
+x.big <- xtable(big_mass_list)
+print(x.big, tabular.environment='longtable',floating=FALSE, table.placement="")
+@
+
+\end{document}

@@ -1,0 +1,161 @@
+\documentclass[11pt]{article}
+\usepackage{graphicx, subfig}
+\usepackage[russian]{babel}
+\usepackage[utf8]{inputenc}
+\usepackage{amsmath}
+\usepackage[margin=0.57in]{geometry}
+\usepackage{listings}
+\usepackage{caption}
+\usepackage{longtable}
+
+\setlength{\parindent}{0pt}
+
+<<setup, echo = FALSE, results='hide', message = FALSE>>=
+  require(xtable)
+  options(width=90)
+  library("xtable")
+@
+
+\newcommand*\conj[1]{\bar{#1}}
+\newcommand*\mean[1]{\bar{#1}}
+
+\begin{document}
+\begin{center}
+{\bf \Large Resulting plots\\}
+\end{center}
+<<echo=FALSE>>=
+
+get_degree <- function(word, df) {
+  return(nrow(df[ df$a1 == word| df$a2 == word, ]))
+}
+
+get_sum_pos_deg <- function(word, df) {
+  return(nrow(df[ (df$a1 == word| df$a2 == word) & df$pos + df$neg > 0, ]))
+}
+
+get_sum_neg_deg <- function(word, df) {
+  return(nrow(df[ (df$a1 == word| df$a2 == word) & df$pos + df$neg < 0, ]))
+}
+
+get_pos_val <- function(word, df) {
+  return(sum(df[ df$a1 == word| df$a2 == word, "pos"]))
+}
+
+get_neg_val <- function(word, df) {
+  return(-sum(df[ df$a1 == word| df$a2 == word, "neg"]))
+}
+@
+Считываем данные:
+<<>>=
+spl = strsplit(getwd(), '/')
+nwd = paste(spl[[1]][1:(length(spl[[1]]) - 2)], collapse = '/')
+nwd = paste(nwd, "pairparser/results", sep = "/")
+fname = "en_pairs(4).txt"
+df = read.table(paste(nwd, fname, sep = "/"), skip = 1, stringsAsFactors=FALSE, encoding="UTF-8")
+colnames(df) <- c("pos", "neg", "a1", "a2")
+@
+<<echo=FALSE, results='asis'>>=
+#degree of node "хороший"
+hor_deg = get_degree("хороший", df)
+#degree of node "плохой"
+ploh_deg = get_degree("плохой", df)
+@
+Степени вершины "хороший": \Sexpr{hor_deg} \\
+Степени вершины "плохой": \Sexpr{ploh_deg} \\
+
+<<echo=FALSE>>=
+#dictionaries
+dict = unique(append(unique(df[['a1']]), unique(df[['a2']])))
+dict_len = length(dict)
+@
+Всего слов (прилагательных): \Sexpr{dict_len} \\
+<<echo=FALSE>>=
+spl = strsplit(getwd(), '/')
+nwd = paste(spl[[1]][1:(length(spl[[1]]) - 2)], collapse = '/')
+nwd = paste(nwd, "results", sep = "/")
+
+fname = "pos4_3.txt"
+pos_dict = scan(paste(nwd, fname, sep = "/"), what=character())
+fname = "neg4_3.txt"
+neg_dict = scan(paste(nwd, fname, sep = "/"), what=character())
+
+neg_coef = 3
+ndf = df
+ndf$neg = ndf$neg * neg_coef
+@
+Функция для подсчёта "веса" вершины:
+<<>>=
+get_sum <- function(word, df) {
+  topos = df[((df$a1 == word & df$a2 %in% pos_dict) | 
+                (df$a2 == word & df$a1 %in% pos_dict)), 
+             ]
+  sumpos = sum(topos$pos + topos$neg)
+  toneg = df[((df$a1 == word & df$a2 %in% neg_dict) | 
+                (df$a2 == word & df$a1 %in% neg_dict)), 
+             ]
+  sumneg = sum(toneg$pos + toneg$neg)
+  
+  return(sumpos - sumneg)
+}
+@
+
+<<echo=FALSE>>=
+#sums = double(length=dict_len)
+#for (i in (1:dict_len)) {
+#  if (i %% 50 == 0)
+#    print(i)
+#  sums[i] = get_sum(dict[i], df)
+#}
+
+#write.table(sumdf[, c(1, 2)], file = 'sums4.txt', sep = ' ',  col.names = FALSE, quote = FALSE, row.names = FALSE)
+
+sums = read.table('sums4.txt', stringsAsFactors=FALSE, col.names = c('word', 's'))
+sums = sums[order(sums[[2]], decreasing=TRUE), ]
+plot(which(sums$w %in% pos_dict), sums[(sums$word %in% pos_dict == TRUE), 2], col = 'green', 
+     xlab = 'words indexes', 
+     ylab = 'sum to pos - sum to neg')
+lines(which(sums$w %in% neg_dict), sums[(sums$word %in% neg_dict == TRUE), 2], col = 'red', type='p')
+
+p1 = 0.05
+p2 = 1 - 0.03
+nsums = sums[(p1 * dict_len):(p2 * dict_len), ]
+plot(which(nsums$w %in% pos_dict), nsums[(nsums$word %in% pos_dict == TRUE), 2], col = 'green', 
+     xlab = 'words indexes', 
+     ylab = 'sum to pos - sum to neg',
+     main = '0.05 from top and 0.03 from bottom % cut')
+lines(which(nsums$w %in% neg_dict), nsums[(nsums$word %in% neg_dict == TRUE), 2], col = 'red', type='p')
+
+p1 = 0.09
+p2 = 1 - 0.03
+nsums = sums[(p1 * dict_len):(p2 * dict_len), ]
+plot(which(nsums$w %in% pos_dict), nsums[(nsums$word %in% pos_dict == TRUE), 2], col = 'green', 
+     xlab = 'words indexes', 
+     ylab = 'sum to pos - sum to neg',
+     main = '0.09 from top and 0.03 from bottom % cut')
+lines(which(nsums$w %in% neg_dict), nsums[(nsums$word %in% neg_dict == TRUE), 2], col = 'red', type='p')
+
+p1 = 0.15
+p2 = 1 - 0.04
+nsums = sums[(p1 * dict_len):(p2 * dict_len), ]
+plot(which(nsums$w %in% pos_dict), nsums[(nsums$word %in% pos_dict == TRUE), 2], col = 'green', 
+     xlab = 'words indexes', 
+     ylab = 'sum to pos - sum to neg',
+     main = '0.15 from top and 0.04 from bottom % cut')
+lines(which(nsums$w %in% neg_dict), nsums[(nsums$word %in% neg_dict == TRUE), 2], col = 'red', type='p')
+@
+
+<<>>=
+fsums = sums
+fsums$s = factor(fsums$s)
+lvls = levels(fsums$s)
+counts = matrix(rep(0, 3 * length(lvls)), ncol = 3)
+for (i in 1:length(lvls)) {
+  buf = fsums[fsums$s == lvls[i], ]
+  counts[i, 1] = nrow(buf[buf$word %in% pos_dict, ])
+  counts[i, 2] = nrow(buf) - counts[i, 1]
+}
+
+#plotting
+plot(0, 0, col = 'white', xlim=c(0, length(lvls)), ylim = c(-5000, 5000))
+@
+\end{document}
