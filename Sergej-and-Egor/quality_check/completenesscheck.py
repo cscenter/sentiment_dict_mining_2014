@@ -1,3 +1,4 @@
+#encoding=utf-8
 __author__ = 'egor'
 
 """
@@ -20,7 +21,7 @@ import sys
 
 
 def read_pos(dict_to_add, filename):
-    f = open(filename, 'r')
+    f = open(filename, 'r', encoding = "utf-8")
     for s in f:
         if s.strip(' \n') not in dict_to_add:
             dict_to_add[s.strip(' \n')] = 1
@@ -28,7 +29,7 @@ def read_pos(dict_to_add, filename):
 
 
 def read_neg(dict_to_add, filename):
-    f = open(filename, 'r')
+    f = open(filename, 'r', encoding = "utf-8")
     for s in f:
         if s.strip(' \n') not in dict_to_add:
             dict_to_add[s.strip(' \n')] = -1
@@ -36,7 +37,7 @@ def read_neg(dict_to_add, filename):
 
 
 def read_neutral(dict_to_add, filename):
-    f = open(filename, 'r')
+    f = open(filename, 'r', encoding = "utf-8")
     for s in f:
         if s.strip(' \n') not in dict_to_add:
             dict_to_add[s.strip(' \n')] = 0
@@ -62,9 +63,9 @@ else:
 
 completeness_value = 0  # number of guessed words from 500-dictionary
 
-f1 = open('compl_not_found.txt', 'w')
-f2 = open('compl_correct_found.txt', 'w')
-f3 = open('compl_wrong_found.txt', 'w')
+f1 = open('compl_not_found.txt', 'w', encoding = "utf-8")
+f2 = open('compl_correct_found.txt', 'w', encoding = "utf-8")
+f3 = open('compl_wrong_found.txt', 'w', encoding = "utf-8")
 
 words_found = 0
 words_correctly_found = 0

@@ -1,3 +1,4 @@
+#coding=utf-8
 __author__ = 'egor'
 
 """
@@ -21,7 +22,7 @@ import sys
 
 
 def read_pos(dict_to_add, filename):
-    f = open(filename, 'r')
+    f = open(filename, 'r', encoding = "utf-8")
     for s in f:
         if s.strip(' \n') not in dict_to_add:
             dict_to_add[s.strip(' \n')] = 1
@@ -29,7 +30,7 @@ def read_pos(dict_to_add, filename):
 
 
 def read_neg(dict_to_add, filename):
-    f = open(filename, 'r')
+    f = open(filename, 'r', encoding = "utf-8")
     for s in f:
         if s.strip(' \n') not in dict_to_add:
             dict_to_add[s.strip(' \n')] = -1
@@ -37,7 +38,7 @@ def read_neg(dict_to_add, filename):
 
 
 def read_neutral(dict_to_add, filename):
-    f = open(filename, 'r')
+    f = open(filename, 'r', encoding = "utf-8")
     for s in f:
         if s.strip(' \n') not in dict_to_add:
             dict_to_add[s.strip(' \n')] = 0
@@ -71,7 +72,7 @@ for key in new_dict.keys():
 print('Quality value: ' + str(quality_value) + ' => '
       + str(quality_value * 100 / len(big_dict)) + '%')
 
-f = open('big_ext_not_marked.txt', 'w')
+f = open('big_ext_not_marked.txt', 'w', encoding = "utf-8")
 
 for key in big_ext_dict:
     f.write(key + '\n')
