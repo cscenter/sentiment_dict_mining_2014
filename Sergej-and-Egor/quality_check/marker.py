@@ -8,11 +8,11 @@ Script parameters:
 
 import sys
 
-if len(sys.argv) < 2:
+if len(sys.argv) < 3:
     sys.exit("Bad args!")
 
 f = open(sys.argv[1], "r", encoding = "utf-8")
-f1 = open("new_big_marked.txt", "a", encoding = "utf-8")
+f1 = open(sys.argv[2], "a+", encoding = "utf-8")
 new_dict = {}
 
 print('Mark new words with +, - or 0')

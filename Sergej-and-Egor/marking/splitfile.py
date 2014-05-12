@@ -10,7 +10,7 @@ positive = {}
 negative = {}
 
 try:
-    f = open(sys.argv[1])
+    f = open(sys.argv[1], "r", encoding = "utf-8")
 except IOError:
     sys.exit('cannot open file ' + sys.argv[1])
 
@@ -22,6 +22,7 @@ for s in f:
         s_split[0] = s_split[0] + s_split[1]
         s_split[1] = s_split[2]
     
+    # print(s_split)
     if (s_split[1] == "+"):
         if s_split[0] in positive:
             positive[s_split[0]] += 1 
@@ -37,20 +38,18 @@ for s in f:
 
 f.close()
 
-sorted_positive = sorted(positive.iteritems(), key = operator.itemgetter(1))
-f = open(sys.argv[1] + "positive", 'w')
-for key in sorted_positive:
-    f.write(key[0] + ' ' + str(key[1]) + '\n')
+print(sys.argv[1].split('.txt'))
+f = open(sys.argv[1].split('.txt')[0] + "_pos.txt", 'w', encoding = "utf-8")
+for key in positive:
+    f.write(key + '\n')
 f.close() 
 
-sorted_negative = sorted(negative.iteritems(), key = operator.itemgetter(1))
-f = open(sys.argv[1] + "negative", 'w')
-for key in sorted_negative:
-    f.write(key[0] + ' ' + str(key[1]) + '\n')
+f = open(sys.argv[1].split('.txt')[0] + "_neg.txt", 'w', encoding = "utf-8")
+for key in negative:
+    f.write(key  + '\n')
 f.close() 
 
-sorted_neutral = sorted(neutral.iteritems(), key = operator.itemgetter(1))
-f = open(sys.argv[1] + "neutral", 'w')
-for key in sorted_neutral:
-    f.write(key[0] + ' ' + str(key[1]) + '\n')
+f = open(sys.argv[1].split('.txt')[0] + "_neu.txt", 'w', encoding = "utf-8")
+for key in neutral:
+    f.write(key + '\n')
 f.close() 
