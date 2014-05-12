@@ -18,22 +18,22 @@ get_neg_val <- function(word, df) {
   return(-sum(df[ df$a1 == word| df$a2 == word, "neg"]))
 }
 
-fpre = '4_3'
+fpre = '7_3'
 
 spl = strsplit(getwd(), '/')
 nwd = paste(spl[[1]][1:(length(spl[[1]]) - 2)], collapse = '/')
 nwd = paste(nwd, "results", sep = "/")
 
-fname = paste(c("pos", fpre, "txt"), collapse='')
+fname = paste(c("pos", fpre, ".txt"), collapse='')
 pos_dict = scan(paste(nwd, fname, sep = "/"), what=character())
-fname = paste(c("neg", fpre, "txt"), collapse='')
+fname = paste(c("neg", fpre, ".txt"), collapse='')
 neg_dict = scan(paste(nwd, fname, sep = "/"), what=character())
 
-sums = read.table(paste(c("sums", fpre, "txt"), collapse=''), stringsAsFactors=FALSE, col.names = c('word', 's'))
+sums = read.table(paste(c("sums", fpre, ".txt"), collapse=''), stringsAsFactors=FALSE, col.names = c('word', 's'))
 sums = sums[order(sums[[2]], decreasing=TRUE), c('word', 's')]
 
-upper.bound = 35
-lower.bound = -3
+upper.bound = 3
+lower.bound = -2
 
 new_neu = sums[ sums$s <= upper.bound & sums$s >= lower.bound, 'word']
 new_neg = sums[ sums$s < lower.bound, 'word' ]
@@ -70,7 +70,7 @@ get_quality <- function(pos, neg, neu)
 
 # Q for s(+) - s(-)
 
-sums = read.table(paste(c("sums", fpre, "txt"), collapse=''), stringsAsFactors=FALSE, col.names = c('word', 's'))
+sums = read.table(paste(c("sums", fpre, ".txt"), collapse=''), stringsAsFactors=FALSE, col.names = c('word', 's'))
 sums = sums[order(sums[[2]], decreasing=TRUE), c('word', 's')]
 
 borders = sort(unique(sums[, 's']))
