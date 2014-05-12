@@ -70,7 +70,7 @@ for key in new_dict.keys():
         big_ext_dict[key] = 0
 
 print('Quality value: ' + str(quality_value) + ' => '
-      + str(quality_value * 100 / len(big_dict)) + '%')
+      + str(quality_value * 100 / len(new_dict)) + '%')
 
 f = open('big_ext_not_marked.txt', 'w', encoding = "utf-8")
 
