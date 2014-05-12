@@ -13,7 +13,6 @@ def add_pair(dict_to_add, adj1, adj2, p_pos, p_neg):
     if adj1 > adj2:
         adj1, adj2 = adj2, adj1
 
-
     if adj1 not in dict_to_add:
         dict_to_add[adj1] = {}
         dict_to_add[adj1][adj2] = [0, 0]
