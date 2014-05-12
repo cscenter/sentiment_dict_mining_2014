@@ -50,7 +50,7 @@ get_neg_val <- function(word, df) {
 @
 Считываем данные:
 <<>>=
-fname = "en_pairs(5).txt"
+fname = "en_pairs(7).txt"
 df = read.table(paste(nwd, fname, sep = "/"), skip = 1, stringsAsFactors=FALSE, encoding="UTF-8")
 colnames(df) <- c("pos", "neg", "a1", "a2")
 @
