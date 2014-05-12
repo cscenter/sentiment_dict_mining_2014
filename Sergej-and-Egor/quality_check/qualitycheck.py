@@ -23,11 +23,7 @@ import sys
 
 def read_pos(dict_to_add, filename):
     f = open(filename, 'r', encoding = "utf-8")
-    a = 5
     for s in f:
-        if a == 5:
-            print(s.strip(' \n'))
-        a = 4
         if s.strip(' \n') not in dict_to_add:
             dict_to_add[s.strip(' \n')] = 1
     f.close()

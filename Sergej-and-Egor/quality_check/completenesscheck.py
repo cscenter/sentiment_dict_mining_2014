@@ -4,10 +4,12 @@ __author__ = 'egor'
 """
 Script parameters:
     1: name of file with positive words, which were found by our algorithms (will be tested)
-    2: name of file with negative words, which were found by our algorithms
-    3: filename of 500-dictionary positive words (for completeness test)
-    4: filename of 500-dictionary negative words (for completeness test)
-    5: filename of words, which were transfomed by deleting 'не' //not necess.
+    2: name of file with neutral words, which were found by our algorithms
+    3: name of file with negative words, which were found by our algorithms
+    4: filename of 500-dictionary positive words (for completeness test)
+    5: filename of 500-dictionary neutral words
+    6: filename of 500-dictionary negative words (for completeness test)
+    7: filename of words, which were transfomed by deleting 'не' //not necess.
 
 While execution, you'll need to mark new for big dictionary words from console
 
@@ -44,7 +46,7 @@ def read_neutral(dict_to_add, filename):
     f.close()
 
 
-if len(sys.argv) < 5:
+if len(sys.argv) < 7:
     sys.exit("Bad arguments!")
 
 completeness_dict = {}  # given completeness 500-dict
@@ -52,12 +54,16 @@ new_dict = {}           # dictionary, which were found by our algorithm
 
 #reading dictionaries
 read_pos(new_dict, sys.argv[1])
-read_neg(new_dict, sys.argv[2])
-read_pos(completeness_dict, sys.argv[3])
-read_neg(completeness_dict, sys.argv[4])
+read_neutral(new_dict, sys.argv[2])
+read_neg(new_dict, sys.argv[3])
 
-if len(sys.argv) > 5:
-	transformed = set(open(sys.argv[5], 'r', encoding="utf-8").read().split("\n"))
+read_pos(completeness_dict, sys.argv[4])
+read_neutral(completeness_dict, sys.argv[5])
+read_neg(completeness_dict, sys.argv[6])
+
+
+if len(sys.argv) > 7:
+	transformed = set(open(sys.argv[7], 'r', encoding="utf-8").read().split("\n"))
 else:
 	transformed = []
 
