@@ -23,6 +23,8 @@ def get_adjective(string):
      :return: if string conforms to pattern: "%word%=A=|..." it return adjective (%word%),
               if string does not, function returns empty str. ("")
      """
+    if get_part_of_speech(string) != 'adjective':
+        return ""
     spl_str = string.split('=')
     x = string.count("=A")
     y = string.count("|") + 1
@@ -361,7 +363,7 @@ class PairParser:
             # adverbs, pronouns, pretext does not matter too. ('Плохое питание, зато, по-моему, очень хороший номер')
             if adj2_info['verb_count'] + conj_info['verb_count'] <= 0 \
                     and adj2_info['noun_count'] + conj_info['noun_count'] <= 0 \
-                    and adj2_info['dist'] + conj_info['dist'] <= 6 \
+                    and adj2_info['dist'] + conj_info['dist'] <= 5 \
                     and adj1_info['gender'] == adj2_info['gender'] \
                     and adj1_info['gender'] != -1:
 
