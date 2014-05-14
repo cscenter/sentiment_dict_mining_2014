@@ -102,7 +102,6 @@ get_sum <- function(word, df) {
   return(sumpos - sumneg)
 }
 @
-@
 Таким образом для каждой вершины считаем: $w_i = (s_+ - s_-)$, где $s_+$ - сумма весов на рёбрах ведущий в положительную долю, а $s_-$ - сумма весов на рёбрах ведущий в отрицательную долю, $deg(i)$ - степень вершины $i$\\
 <<echo=FALSE, fig.height=15, fig.width=15>>=
 # sums = double(length=dict_len)
