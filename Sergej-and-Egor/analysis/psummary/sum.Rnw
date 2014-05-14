@@ -67,10 +67,20 @@ ploh_deg = get_degree("плохой", df)
 min_abs_big_mass = 100
 @
 
-<<echo=FALSE>>=
+<<>>=
 #dictionaries
 dict = unique(append(unique(df[['a1']]), unique(df[['a2']])))
 dict_len = length(dict)
+
+for (w in dict) {
+  if (nrow(df[(df$a1 == w | df$a2 == w), ]) == 1) {
+    p = df[(df$a1 == w | df$a2 == w), 'pos']
+    n = df[(df$a1 == w | df$a2 == w), 'neg']
+    if (p > 4 | n < -4) {
+      print(df[(df$a1 == w | df$a2 == w), ])
+    }
+  }
+}
 @
 Всего слов (прилагательных): \Sexpr{dict_len} \\
 

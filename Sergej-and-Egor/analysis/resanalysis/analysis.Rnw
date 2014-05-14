@@ -24,7 +24,7 @@
 
 \begin{document}
 \begin{center}
-{\bf \Large Resulting plots, f:5, coef:3\\}
+{\bf \Large Resulting plots, f:7, coef:3\\}
 \end{center}
 <<echo=FALSE>>=
 
@@ -53,7 +53,7 @@ get_neg_val <- function(word, df) {
 spl = strsplit(getwd(), '/')
 nwd = paste(spl[[1]][1:(length(spl[[1]]) - 2)], collapse = '/')
 nwd = paste(nwd, "pairparser/results", sep = "/")
-fname = "en_pairs(5).txt"
+fname = "en_pairs(7).txt"
 df = read.table(paste(nwd, fname, sep = "/"), skip = 1, stringsAsFactors=FALSE, encoding="UTF-8")
 colnames(df) <- c("pos", "neg", "a1", "a2")
 @
@@ -64,18 +64,24 @@ dict_len = length(dict)
 @
 Всего слов (прилагательных): \Sexpr{dict_len} \\
 <<echo=FALSE>>=
+ftag = '7_3'
+
 spl = strsplit(getwd(), '/')
 nwd = paste(spl[[1]][1:(length(spl[[1]]) - 2)], collapse = '/')
 nwd = paste(nwd, "results", sep = "/")
 
-fname = "pos5_3.txt"
+fname = paste(c("pos", ftag, ".txt"), collapse='')
 pos_dict = scan(paste(nwd, fname, sep = "/"), what=character())
-fname = "neg5_3.txt"
+fname = paste(c("neg", ftag, ".txt"), collapse='')
 neg_dict = scan(paste(nwd, fname, sep = "/"), what=character())
 
+get_cut_val(pos_dict, neg_dict)
 neg_coef = 3
 ndf = df
 ndf$neg = ndf$neg * neg_coef
+
+comp_dict_neg = read.table('../../../testing/500_neg.txt', stringsAsFactors=FALSE, encoding="UTF-8")[, 'V1']
+comp_dict_pos = read.table('../../../testing/500_pos.txt', stringsAsFactors=FALSE, encoding="UTF-8")[, 'V1']
 @
 Функция для подсчёта "веса" вершины:
 <<>>=
@@ -83,15 +89,20 @@ get_sum <- function(word, df) {
   topos = df[((df$a1 == word & df$a2 %in% pos_dict) | 
                 (df$a2 == word & df$a1 %in% pos_dict)), 
              ]
+  # print(topos)
   sumpos = sum(topos$pos + topos$neg)
+  # print(sumpos)
   toneg = df[((df$a1 == word & df$a2 %in% neg_dict) | 
                 (df$a2 == word & df$a1 %in% neg_dict)), 
              ]
+  # print(toneg)
   sumneg = sum(toneg$pos + toneg$neg)
+  # print(sumneg)
   
-  return((sumpos - sumneg) / get_degree(word, df))
-  #return(sumpos - sumneg)
+  return(sumpos - sumneg)
 }
+
+
 @
 Таким образом для каждой вершины считаем: $w_i = (s_+ - s_-)$, где $s_+$ - сумма весов на рёбрах ведущий в положительную долю, а $s_-$ - сумма весов на рёбрах ведущий в отрицательную долю, $deg(i)$ - степень вершины $i$\\
 <<echo=FALSE, fig.height=15, fig.width=15>>=
@@ -103,14 +114,17 @@ get_sum <- function(word, df) {
 # }
 # sums = matrix(c(dict, sums), ncol = 2)
 
-#write.table(sums[, c(1, 2)], file = 'sums5_3d.txt', sep = ' ',  col.names = FALSE, quote = FALSE, row.names = FALSE)
+#write.table(sums[, c(1, 2)], file =paste(c("sums", ftag, ".txt"), collapse=''), sep = ' ',  col.names = FALSE, quote = FALSE, row.names = FALSE)
 
-sums = read.table('sums4_3.txt', stringsAsFactors=FALSE, col.names = c('word', 's'))
+sums = read.table(paste(c("weights/sums", ftag, ".txt"), collapse=''), stringsAsFactors=FALSE, col.names = c('word', 's'))
 sums = sums[order(sums[[2]], decreasing=TRUE), ]
 plot(which(sums$w %in% pos_dict), sums[(sums$word %in% pos_dict == TRUE), 2], col = 'green', 
      xlab = 'words indexes', 
      ylab = 'sum to pos - sum to neg')
 lines(which(sums$w %in% neg_dict), sums[(sums$word %in% neg_dict == TRUE), 2], col = 'red', type='p')
+lines(which(sums$w %in% comp_dict_pos), sums[(sums$word %in% comp_dict_pos == TRUE), 2], col = 'blue', type='p', pch=25)
+lines(which(sums$w %in% comp_dict_neg), sums[(sums$word %in% comp_dict_neg == TRUE), 2], col = 'pink', type='p', pch=22)
+
 
 p1 = 0.05
 p2 = 1 - 0.03
@@ -120,6 +134,8 @@ plot(which(nsums$w %in% pos_dict), nsums[(nsums$word %in% pos_dict == TRUE), 2],
      ylab = 'sum to pos - sum to neg',
      main = '0.05 from top and 0.03 from bottom % cut')
 lines(which(nsums$w %in% neg_dict), nsums[(nsums$word %in% neg_dict == TRUE), 2], col = 'red', type='p')
+lines(which(nsums$w %in% comp_dict_pos), nsums[(nsums$word %in% comp_dict_pos == TRUE), 2], col = 'blue', type='p', pch=25)
+lines(which(nsums$w %in% comp_dict_neg), nsums[(nsums$word %in% comp_dict_neg == TRUE), 2], col = 'pink', type='p', pch=22)
 
 p1 = 0.09
 p2 = 1 - 0.03
@@ -129,6 +145,8 @@ plot(which(nsums$w %in% pos_dict), nsums[(nsums$word %in% pos_dict == TRUE), 2],
      ylab = 'sum to pos - sum to neg',
      main = '0.09 from top and 0.03 from bottom % cut')
 lines(which(nsums$w %in% neg_dict), nsums[(nsums$word %in% neg_dict == TRUE), 2], col = 'red', type='p')
+lines(which(nsums$w %in% comp_dict_pos), nsums[(nsums$word %in% comp_dict_pos == TRUE), 2], col = 'blue', type='p', pch=25)
+lines(which(nsums$w %in% comp_dict_neg), nsums[(nsums$word %in% comp_dict_neg == TRUE), 2], col = 'pink', type='p', pch=22)
 
 p1 = 0.15
 p2 = 1 - 0.04
@@ -138,6 +156,8 @@ plot(which(nsums$w %in% pos_dict), nsums[(nsums$word %in% pos_dict == TRUE), 2],
      ylab = 'sum to pos - sum to neg',
      main = '0.15 from top and 0.04 from bottom % cut')
 lines(which(nsums$w %in% neg_dict), nsums[(nsums$word %in% neg_dict == TRUE), 2], col = 'red', type='p')
+lines(which(nsums$w %in% comp_dict_pos), nsums[(nsums$word %in% comp_dict_pos == TRUE), 2], col = 'blue', type='p', pch=25)
+lines(which(nsums$w %in% comp_dict_neg), nsums[(nsums$word %in% comp_dict_neg == TRUE), 2], col = 'pink', type='p', pch=22)
 @
 
 <<echo=FALSE>>=
@@ -159,39 +179,11 @@ for (i in 1:length(lvls)) {
 }
 @
 \newpage
-График ниже строился так: вес $w_i = (s_+ - s_-)$ для каждой вершины распределен среди 817 различных значений - уровни. Высота столбца - значение уровня. Каждый столбец окрашен в зелёный и красный цвета, отношение площадей с зелёным цветом к пл. с красным = отношение числа позитивных прилагательных к негативным на данном уровне.\\
-<<echo=FALSE, fig.height=15, fig.width=15>>=
-#plotting
-#cutting lvls
-top = 0
-for (i in 1:length(lvls)) {
-  if (counts[i, 2] != 0) {
-    top = i
-    break
-  }
-}
-bottom  = length(lvls)
-for (i in 0:(length(lvls) - 1)) {
-  if (counts[length(lvls) - i, 3] != 0) {
-    bottom = length(lvls) - i
-    break
-  }
-}
-top = 90#50
-bottom =158 #95
-cfp = counts[top:bottom, ]
-plot(0, 0, col = 'white', xlim=c(0, dim(cfp)[1]), ylim = c(cfp[1, 1], cfp[dim(cfp)[1], 1]), main = "pos and neg ratio for levels")
-for (i in 1:dim(cfp)[1]) {
-  py = cfp[i, 1] * cfp[i, 2] / (cfp[i, 2] + cfp[i, 3])
-  rect(i - 1, 0, i, py, col = 'green')
-  rect(i - 1, py, i, cfp[i, 1], col='red')
-}
-@
 В таблице ниже приведены позитивные (pos) и негативные (neg) для некоторых уровней, т.е. имеющие вес $w_i = (s_+ - s_-)$ равный значению в первом столбце.\\
 <<results='asis', echo=FALSE>>=
 
 # making dataframe to print table
-indexes = c(38, 41, 90:158)
+indexes = c(1:length(lvls))
 tbl = matrix(rep(0, 3 * length(indexes)), ncol = 3)
 for (i in 1:length(indexes)) {
   tbl[i, 1] = cwords[[indexes[i]]]$lvl
