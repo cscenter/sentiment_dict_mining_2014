@@ -63,8 +63,8 @@ dict = unique(append(unique(df[['a1']]), unique(df[['a2']])))
 dict_len = length(dict)
 @
 Всего слов (прилагательных): \Sexpr{dict_len} \\
-<<echo=FALSE>>=
-ftag = '7_3'
+<<>>=
+ftag = '7_3new'
 
 spl = strsplit(getwd(), '/')
 nwd = paste(spl[[1]][1:(length(spl[[1]]) - 2)], collapse = '/')
@@ -75,7 +75,6 @@ pos_dict = scan(paste(nwd, fname, sep = "/"), what=character())
 fname = paste(c("neg", ftag, ".txt"), collapse='')
 neg_dict = scan(paste(nwd, fname, sep = "/"), what=character())
 
-get_cut_val(pos_dict, neg_dict)
 neg_coef = 3
 ndf = df
 ndf$neg = ndf$neg * neg_coef
@@ -89,20 +88,20 @@ get_sum <- function(word, df) {
   topos = df[((df$a1 == word & df$a2 %in% pos_dict) | 
                 (df$a2 == word & df$a1 %in% pos_dict)), 
              ]
-  # print(topos)
+   print(topos)
+  print(topos$pos + topos$neg)
   sumpos = sum(topos$pos + topos$neg)
-  # print(sumpos)
+  print(sumpos)
   toneg = df[((df$a1 == word & df$a2 %in% neg_dict) | 
                 (df$a2 == word & df$a1 %in% neg_dict)), 
              ]
-  # print(toneg)
+  print(toneg)
   sumneg = sum(toneg$pos + toneg$neg)
-  # print(sumneg)
+  print(sumneg)
   
   return(sumpos - sumneg)
 }
-
-
+@
 @
 Таким образом для каждой вершины считаем: $w_i = (s_+ - s_-)$, где $s_+$ - сумма весов на рёбрах ведущий в положительную долю, а $s_-$ - сумма весов на рёбрах ведущий в отрицательную долю, $deg(i)$ - степень вершины $i$\\
 <<echo=FALSE, fig.height=15, fig.width=15>>=
@@ -114,7 +113,7 @@ get_sum <- function(word, df) {
 # }
 # sums = matrix(c(dict, sums), ncol = 2)
 
-#write.table(sums[, c(1, 2)], file =paste(c("sums", ftag, ".txt"), collapse=''), sep = ' ',  col.names = FALSE, quote = FALSE, row.names = FALSE)
+#write.table(sums[, c(1, 2)], file =paste(c("weights/sums", ftag, ".txt"), collapse=''), sep = ' ',  col.names = FALSE, quote = FALSE, row.names = FALSE)
 
 sums = read.table(paste(c("weights/sums", ftag, ".txt"), collapse=''), stringsAsFactors=FALSE, col.names = c('word', 's'))
 sums = sums[order(sums[[2]], decreasing=TRUE), ]
