@@ -61,10 +61,11 @@ colnames(df) <- c("pos", "neg", "a1", "a2")
 #dictionaries
 dict = unique(append(unique(df[['a1']]), unique(df[['a2']])))
 dict_len = length(dict)
+
 @
 Всего слов (прилагательных): \Sexpr{dict_len} \\
-<<>>=
-ftag = '7_3new'
+<<results='asis'>>=
+ftag = '7_3imp'
 
 spl = strsplit(getwd(), '/')
 nwd = paste(spl[[1]][1:(length(spl[[1]]) - 2)], collapse = '/')
@@ -81,38 +82,63 @@ ndf$neg = ndf$neg * neg_coef
 
 comp_dict_neg = read.table('../../../testing/500_neg.txt', stringsAsFactors=FALSE, encoding="UTF-8")[, 'V1']
 comp_dict_pos = read.table('../../../testing/500_pos.txt', stringsAsFactors=FALSE, encoding="UTF-8")[, 'V1']
+
+#sum_cut = 0
+#edge_cut_count = 0
+#neg_edge_count = nrow(ndf[ndf$pos + ndf$neg < 0, ])
+#neg_edge_count = 0
+#edge_count = nrow(ndf)
+#for (i in 1:edge_count) {
+#  
+#  if (i %% 50 == 0) {
+#    print(i)
+#  }
+#  
+#  cur = ndf[i, ]
+#  w = cur$pos + cur$neg
+#  if ((cur$a1 %in% pos_dict && cur$a2 %in% neg_dict) | (cur$a1 %in% neg_dict && cur$a2 %in% pos_dict)) {
+#    sum_cut = sum_cut + w
+#    edge_cut_count = edge_cut_count + 1
+#  }
+#  if (w < 0) {
+#    neg_edge_count = neg_edge_count + 1
+#  }
+#}
 @
+Величина разреза: $\Sexpr{-34638}$\\
+Число рёбер в разрезе: $\Sexpr{10206}
+Число рёбер всего: $\Sexpr{34135}$\\
+Число отрицательный рёбер: $\Sexpr{7364}$\\
 Функция для подсчёта "веса" вершины:
 <<>>=
 get_sum <- function(word, df) {
   topos = df[((df$a1 == word & df$a2 %in% pos_dict) | 
                 (df$a2 == word & df$a1 %in% pos_dict)), 
              ]
-   print(topos)
-  print(topos$pos + topos$neg)
+  #print(topos)
+  #print(topos$pos + topos$neg)
   sumpos = sum(topos$pos + topos$neg)
-  print(sumpos)
+  #print(sumpos)
   toneg = df[((df$a1 == word & df$a2 %in% neg_dict) | 
                 (df$a2 == word & df$a1 %in% neg_dict)), 
              ]
-  print(toneg)
+  #print(toneg)
   sumneg = sum(toneg$pos + toneg$neg)
-  print(sumneg)
+  #print(sumneg)
   
   return(sumpos - sumneg)
 }
 @
 Таким образом для каждой вершины считаем: $w_i = (s_+ - s_-)$, где $s_+$ - сумма весов на рёбрах ведущий в положительную долю, а $s_-$ - сумма весов на рёбрах ведущий в отрицательную долю, $deg(i)$ - степень вершины $i$\\
-<<echo=FALSE, fig.height=15, fig.width=15>>=
-# sums = double(length=dict_len)
-# for (i in (1:dict_len)) {
-#   if (i %% 50 == 0)
-#     print(i)
-#   sums[i] = get_sum(dict[i], ndf)
-# }
-# sums = matrix(c(dict, sums), ncol = 2)
-
-#write.table(sums[, c(1, 2)], file =paste(c("weights/sums", ftag, ".txt"), collapse=''), sep = ' ',  col.names = FALSE, quote = FALSE, row.names = FALSE)
+<<echo=FALSE, fig.height=15, fig.width=15>>=d
+#sums = double(length=dict_len)
+#for (i in (1:dict_len)) {
+#  if (i %% 50 == 0)
+#    print(i)
+# sums[i] = get_sum(dict[i], ndf)
+#}
+#sums = matrix(c(dict, sums), ncol = 2)
+#write.table(sums[, c(1, 2)], file =paste(c("weights/sums", ftag, ".txt"), collapse=''), sep = ' ',  col.names = FALSE, quote = FALSE, #row.names = FALSE)
 
 sums = read.table(paste(c("weights/sums", ftag, ".txt"), collapse=''), stringsAsFactors=FALSE, col.names = c('word', 's'))
 sums = sums[order(sums[[2]], decreasing=TRUE), ]
