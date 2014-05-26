@@ -4,7 +4,7 @@ from graph_tool.flow import min_cut
 
 filename = '../pairparser/results/en_pairs(7).txt'
 print(filename)
-coefficient = 3
+coefficient = 5.278
 
 word_dict = {}
 add_dict = {}
@@ -51,6 +51,8 @@ for line in f:
     e = pairs_graph.add_edge(v1, v2)
     edge_weights[e] = cur_weight
 
+print("graph builded")
+
 components_label = label_components(pairs_graph)
 largest_label = label_largest_component(pairs_graph)
 #print(components_label[0].a)
@@ -58,7 +60,7 @@ largest_label = label_largest_component(pairs_graph)
 
 mc, part = min_cut(pairs_graph, edge_weights)
 
-print("Cut value = " + str(mc))
+print("Min cut value = " + str(mc))
 
 f1 = open('first_part.txt', 'w', encoding="utf-8")
 f2 = open('sec_part.txt', 'w', encoding="utf-8")
@@ -89,6 +91,7 @@ f3.close()
 #          edge_font_size=15, vertex_fill_color=part)
 
 # improving cut
+print("Improving cut")
 dists = pairs_graph.new_vertex_property("int")
 pos = 0
 neg = 1
@@ -119,7 +122,8 @@ max_iter = 1000
 i = 0
 while bad_vertices[worst_vertex] != 0 and i < max_iter:
     i += 1
-    print(i)
+    if (i % 10 == 0):
+        print(i)
     # print(bad_vertices)
     part[worst_vertex] = 1 - part[worst_vertex]
     bad_vertices[worst_vertex] = 0
@@ -145,8 +149,8 @@ for e in pairs_graph.edges():
 
 print("New cut value = " + str(cut_value))
 
-f1 = open('new2_first_part.txt', 'w', encoding="utf-8")
-f2 = open('new2_sec_part.txt', 'w', encoding="utf-8")
+f1 = open('new3_first_part.txt', 'w', encoding="utf-8")
+f2 = open('new3_sec_part.txt', 'w', encoding="utf-8")
 
 count1 = 0
 count2 = 0
