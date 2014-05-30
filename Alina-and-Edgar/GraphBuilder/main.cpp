@@ -74,7 +74,7 @@ int main(int argc, char** argv) {
 			}
 		}
 
-		if (argv[3] == "1") {
+		if (atoi(argv[3]) == 1) {
 			std :: map<std :: string, std :: map<std :: string, std :: pair<int, int> > > :: iterator it;
 			for (it = graph.begin(); it != graph.end(); ++it) {
 				std :: string word = it->first;

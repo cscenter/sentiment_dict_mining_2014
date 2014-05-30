@@ -29,28 +29,28 @@ void merge_words(std :: map<std:: string, std :: map<std :: string, std :: pair<
 				graph[a][it->first] = it->second;
 			}
 		}
-		graph.erase(b);	
+		graph.erase(b);
 	}
 }
 
-int main(int argc, char** argv) {    
-	if (argc != 4) {        
-		std :: cerr << "Usage: GraphBuilder.exe input_file output_file enable_merge(1/0)" << std :: endl;    
-	} else {     
+int main(int argc, char** argv) {
+	if (argc != 4) {
+		std :: cerr << "Usage: GraphBuilder.exe input_file output_file enable_merge(1/0)" << std :: endl;
+	} else {
 		const char* input_file = argv[1];
 		const char* output_file = argv[2];
 		std :: ifstream ifs(input_file, std :: ifstream :: in);
 		std :: ofstream ofs(output_file, std :: ifstream :: out);
 		std :: map<std:: string, std :: map<std :: string, std :: pair<int, int> > > graph;
-		while (!ifs.eof()) {          
+		while (!ifs.eof()) {
 			std :: string first_adj, second_adj, num;
 			ifs >> first_adj >> second_adj >> num;
 			clean_string(first_adj);
 			clean_string(second_adj);
 			clean_string(num);
 			int polarity = atoi(num.c_str());
-			if (graph.find(first_adj) == graph.end()) {          		
-				if (polarity > 0) {			
+			if (graph.find(first_adj) == graph.end()) {
+				if (polarity > 0) {
 					graph[first_adj][second_adj] = std :: make_pair(polarity, 0);
 				} else {
 					graph[first_adj][second_adj] = std :: make_pair(0, polarity);
@@ -60,21 +60,21 @@ int main(int argc, char** argv) {
 					if (polarity > 0) {
 						graph[first_adj][second_adj] = std :: make_pair(polarity, 0);
 					} else {
-						graph[first_adj][second_adj] = std :: make_pair(0, polarity);          		
+						graph[first_adj][second_adj] = std :: make_pair(0, polarity);
 					}
 				} else {
 					int pos_polarity = graph[first_adj][second_adj].first;
 					int neg_polarity = graph[first_adj][second_adj].second;
 					if (polarity > 0) {
 						graph[first_adj][second_adj] = std :: make_pair(pos_polarity + polarity, neg_polarity);
-					} else {         			
+					} else {
 						graph[first_adj][second_adj] = std :: make_pair(pos_polarity, neg_polarity + polarity);
 					}
 				}
 			}
 		}
 
-		if (argv[3] == "1") {
+		if (atoi(argv[3]) == 1) {
 			std :: map<std :: string, std :: map<std :: string, std :: pair<int, int> > > :: iterator it;
 			for (it = graph.begin(); it != graph.end(); ++it) {
 				std :: string word = it->first;
@@ -82,7 +82,7 @@ int main(int argc, char** argv) {
 				if (graph.find(anti_word) != graph.end()) {
 					merge_words(graph, word, anti_word);
 				}
-			}			
+			}
 		}
 
 		std :: map<std :: string, std :: map<std :: string, std :: pair<int, int> > > :: iterator it;
@@ -95,8 +95,8 @@ int main(int argc, char** argv) {
 			ofs << std :: endl;
 		}
 		ifs.close();
-		ofs.close();                              
-	}          
-	
+		ofs.close();
+	}
+
 	return 0;
 }
