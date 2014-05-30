@@ -1,15 +1,16 @@
 rem mystem -ngci -e utf-8 <row>inp
 rem python parser.py inp output
-rem C:\MinGW\bin\g++ -Wall ..\..\GraphBuilder\main.cpp -o ..\..\GraphBuilder\main.exe
-rem C:\MinGW\bin\g++ GraphAnalyzer.cpp -o GraphAnalyzer.exe
 
-rem ..\..\GraphBuilder\main.exe ..\test500\output graph0 0
-rem python ..\..\GraphBuilder\convert.py graph0 edges0
-rem GraphAnalyzer.exe edges0 test500\pos0.txt test500\neg0.txt
+rem g++ -Wall ..\..\GraphBuilder\main.cpp -o ..\..\GraphBuilder\main.exe
+g++ GraphAnalyzer.cpp -o GraphAnalyzer.exe
 
-rem ..\..\GraphBuilder\main.exe ..\test500\output graph1 1
-rem python ..\..\GraphBuilder\convert.py graph1 edges1
-rem GraphAnalyzer.exe edges1 test500\pos1.txt test500\neg1.txt
+ ..\..\GraphBuilder\main.exe ..\test500\output graph0 0
+python ..\..\GraphBuilder\convert.py graph0 edges0
+GraphAnalyzer.exe edges0 test500\pos0.txt test500\neg0.txt
+
+..\..\GraphBuilder\main.exe ..\test500\output graph1 1
+python ..\..\GraphBuilder\convert.py graph1 edges1
+GraphAnalyzer.exe edges1 test500\pos1.txt test500\neg1.txt
 
 echo pos_recall =  > test500\result0
 python ..\..\testing\recall_testing.py test500\pos0.txt ..\..\testing\500_pos.txt >> test500\result0

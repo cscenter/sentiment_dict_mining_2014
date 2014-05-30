@@ -17,11 +17,11 @@ def loop(set):
 if len(sys.argv) != 6:
     print("Usage: PlotBuilder.py graph_file, pos_file, neu_file, neg_file, output_file")
 else:
-    graph_file = open(sys.argv[1], "r", encoding="utf-8")
-    pos_file = open(sys.argv[2], "r", encoding="utf-8")
-    neu_file = open(sys.argv[3], "r", encoding="utf-8")
-    neg_file = open(sys.argv[4], "r", encoding="utf-8")
-    output_file = open(sys.argv[5], "w", encoding="utf-8")
+    graph_file = open(sys.argv[1], "r", encoding="cp1251")
+    pos_file = open(sys.argv[2], "r", encoding="cp1251")
+    neu_file = open(sys.argv[3], "r", encoding="cp1251")
+    neg_file = open(sys.argv[4], "r", encoding="cp1251")
+    output_file = open(sys.argv[5], "w", encoding="cp1251")
 
     pos_set = set(line.strip() for line in pos_file)
     neu_set = set(line.strip() for line in neu_file)
