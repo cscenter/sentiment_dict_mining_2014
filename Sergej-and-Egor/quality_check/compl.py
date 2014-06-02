@@ -95,16 +95,13 @@ if __name__ == "__main__":
     ftag = sys.argv[1]
     l = float(sys.argv[2])
     r = float(sys.argv[3])
-    index = sys.argv[4]
-
+    
     # files names to read drom
     new_pos_file = "../results/pos" + ftag + ".txt"
     new_neg_file = "../results/neg" + ftag + ".txt"
     new_neu_file = "../results/neu" + ftag + ".txt"
 
     sums_file = "../results/weights/sums" + ftag + ".txt"
-
-    transformed_file = "../results/transformed" + index + ".txt"
 
     # initializing dictionaries
     new_pos = {}

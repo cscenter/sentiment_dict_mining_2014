@@ -168,11 +168,13 @@ plt.title('Histogram of attraction')
 plt.grid(True)
 plt.show()
 d = "x"
-cols = ['r', 'g', 'b', 'y', 'k']
+cols = ['r', 'g', 'b']
 ind = 0
 while d != "exit":
     max_col = np.argmax(n)
     print(n[max_col])
+    if (ind >= len(cols)):
+        ind = 0
     plt.plot(mids, n, cols[ind])
     ind += 1
     n[max_col] = 0

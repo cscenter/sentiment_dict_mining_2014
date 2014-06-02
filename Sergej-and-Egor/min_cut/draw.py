@@ -2,7 +2,7 @@
 from graph_tool.all import Graph, label_components, graph_draw, label_largest_component, arf_layout, sfdp_layout
 from graph_tool.flow import min_cut
 
-filename = '../pairparser/results/en_pairs(0).txt'
+filename = 'buf.txt'
 print(filename)
 coefficient = 3
 
@@ -56,6 +56,17 @@ largest_label = label_largest_component(pairs_graph)
 #print(components_label[0].a)
 print(largest_label.a)
 
+degr = pairs_graph.new_vertex_property("int")
+
+for v in pairs_graph.vertices():
+    degr[v] = v.out_degree()    
+
+
+print("hihi")
+posPlot = sfdp_layout(pairs_graph, gamma = 5, max_level = 50, vweight = degr, C = 0.5, K = 5, p = 7, theta = 0.1)
+print("hi")
+graph_draw(pairs_graph, pos=posPlot, vertex_text=ver_names, edge_text=edge_weights)
+
 # position = arf_layout(pairs_graph, max_iter=3)
 # graph_draw(pairs_graph, pos=position, vertex_text=ver_names, edge_text=edge_weights, vertex_size=5, vertex_font_size=10,
 #          edge_font_size=15, vertex_fill_color=part)
@@ -64,10 +75,6 @@ mc, part = min_cut(pairs_graph, edge_weights)
 
 print("Cut value = " + str(mc))
 
-degr = pairs_graph.new_vertex_property("int")
-
-for v in pairs_graph.vertices():
-    degr[v] = v.out_degree()    
 
 group_property = pairs_graph.new_vertex_property("int")
 for v in pairs_graph.vertices():
@@ -75,10 +82,21 @@ for v in pairs_graph.vertices():
         group_property[v] = 0
     else:
         group_property[v] = 1
+color = pairs_graph.new_vertex_property("vector<double>")
+s = ""
+for v in pairs_graph.vertices():
+    if part[v] == 0:
+        s += "g"
+        color[v] = [0.2, 0.6, 0.2, 0.9]
+    else:
+        s += "r"
+        color[v] = [1, 0, 0, 0.9]
+    if ver_names[v] == "дешевый":
+        color[v] = [0.1, 0.2, 0.7, 0.9]
 print("hihi")
 posPlot = sfdp_layout(pairs_graph, groups = group_property, gamma = 5, max_level = 50, vweight = degr, C = 0.5, K = 5, p = 7, theta = 0.1)
 print("hi")
-graph_draw(pairs_graph, pos=posPlot,  vertex_fill_color=part, vertex_text=ver_names)
+graph_draw(pairs_graph, pos=posPlot,  vertex_fill_color=color, vertex_text=ver_names, edge_text=edge_weights)
 
 
 

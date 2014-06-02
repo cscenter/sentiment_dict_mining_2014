@@ -119,6 +119,9 @@ def escape_from_neg(fnamein, fnameout, ftransformed):
 if __name__ == "__main__":
     if len(sys.argv) < 4:
         sys.stderr.write('ERROR: Bad arguments')
+        sys.stderr.write('Usage: python3 escapeneg.py pairs.txt out.txt transformed_out.txt')
+        sys.stderr.write('first arg - file with pairs in form [%m% %n% %adj1% %adj2%], m - number of pos. conj; n - number of neg. conj' + 
+        '\n second arg - where to write' + 'third arg - filename for file with transformed adjectives (with не)')
         sys.exit(1)
 
     # first arg - file with pairs in form [%m% %n% %adj1% %adj2%], m - number of pos. conj; n - number of neg. conj.

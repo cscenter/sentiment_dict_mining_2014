@@ -53,7 +53,7 @@ get_neg_val <- function(word, df) {
 spl = strsplit(getwd(), '/')
 nwd = paste(spl[[1]][1:(length(spl[[1]]) - 2)], collapse = '/')
 nwd = paste(nwd, "pairparser/results", sep = "/")
-fname = "p_pairs7.txt"
+fname = "en_pairs(7).txt"
 df = read.table(paste(nwd, fname, sep = "/"), skip = 1, stringsAsFactors=FALSE, encoding="UTF-8")
 colnames(df) <- c("pos", "neg", "a1", "a2")
 @
@@ -65,7 +65,7 @@ dict_len = length(dict)
 @
 Всего слов (прилагательных): \Sexpr{dict_len} \\
 <<>>=
-ftag = '7_3p'
+ftag = '7_3imp'
 
 spl = strsplit(getwd(), '/')
 nwd = paste(spl[[1]][1:(length(spl[[1]]) - 2)], collapse = '/')
@@ -103,25 +103,28 @@ comp_dict_pos = read.table('../../../testing/500_pos.txt', stringsAsFactors=FALS
 
 #sum_cut = 0
 #edge_cut_count = 0
-#neg_edge_count = nrow(ndf[ndf$pos + ndf$neg < 0, ])
-#neg_edge_count = 0
-#edge_count = nrow(ndf)++
-#for (i in 1:edge_count) {
-#  
-#  if (i %% 50 == 0) {
-#    print(i)
-#  }
-#  
-#  cur = ndf[i, ]
-#  w = cur$pos + cur$neg
-#  if ((cur$a1 %in% pos_dict && cur$a2 %in% neg_dict) | (cur$a1 %in% neg_dict && cur$a2 %in% pos_dict)) {
-#    sum_cut = sum_cut + w
-#    edge_cut_count = edge_cut_count + 1
-#  }
-#  if (w < 0) {
-#    neg_edge_count = neg_edge_count + 1
-#  }
-#}
+neg_edge_count = nrow(ndf[ndf$pos + ndf$neg < 0, ])
+neg_edge_count = 0
+edge_count = nrow(ndf)
+neg_cut_count = 0
+sum_cut = 0
+for (i in 1:edge_count) {
+  if (i %% 50 == 0) {
+      print(i)
+  }
+  cur = ndf[i, ]
+  w = cur$pos + cur$neg
+  if ((cur$a1 %in% pos_dict && cur$a2 %in% neg_dict) | (cur$a1 %in% neg_dict && cur$a2 %in% pos_dict)) {
+    sum_cut = sum_cut + w
+    edge_cut_count = edge_cut_count + 1
+    if (w < 0) {
+      neg_cut_count = neg_cut_count + 1
+    }
+  }
+  if (w < 0) {
+    neg_edge_count = neg_edge_count + 1
+  }
+}
 @
 <<>>=
 get_sum <- function(word, df) {

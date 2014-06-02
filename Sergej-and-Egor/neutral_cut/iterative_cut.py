@@ -46,7 +46,7 @@ def get_indexes(vect, l, h):
             
 def plot_attractions(in_graph, low, hig):
     ver_attr = sorted(in_graph.vertex_properties["attraction"].a, reverse=True)
-    ver_attr = ver_attr[100:-50]
+    ver_attr = ver_attr[200:-100]
     [a, b] = get_indexes(ver_attr, low, hig)
     plt.plot(range(0, a + 1), ver_attr[:(a + 1)], 'go')
     plt.plot(range(a + 1, b + 1), ver_attr[(a + 1):(b + 1)], 'bo')
@@ -159,7 +159,7 @@ print("Completeness = " + str(cur_comp["c"]))
 #        print("try again")
 #        d = sys.stdin.readline().strip(' \n')
 low = -4
-hig = 13
+hig = 16
 while True:
     prev_q = cur_qual["q"]
     prev_c = cur_comp["c"]
@@ -185,7 +185,10 @@ while True:
     print("-----------------------------------------------")
     print("Sum vol = " + str(len(neutral) + len(positive) + len(negative)))
     print("total neutral cutted = " + str(len(neutral)))
+    print("pos = " + str(len(positive)))
+    print("neg = " + str(len(negative)))
     print("Quality = " + str(cur_qual["q"]))
+    print("Rude mist. % = " + str(cur_qual["rude"]))
     print(cur_qual["notfound"])
     print("Completeness = " + str(cur_comp["c"]))
     print("-----------------------------------------------")
