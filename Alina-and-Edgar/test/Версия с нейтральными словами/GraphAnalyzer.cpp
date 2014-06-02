@@ -57,79 +57,79 @@ void add_edge(string word1, string word2, int pos, int neg)
 
     g[beg].push_back(end);
     w[beg].push_back(make_pair(pos, K * neg));
-    g[end].push_back(beg);
-    w[end].push_back(make_pair(pos, K * neg));
+    //g[end].push_back(beg);
+    //w[end].push_back(make_pair(pos, K * neg));
 }
 
 
-void push_vertex(set<int> *Result, set<int> *Opposite, set<int> *Candidate, int best_index, vector<int> *dist, ofstream& fres)
+void push_vertex(set<int> &Result, set<int> &Opposite, set<int> &Candidate, int best_index, vector<int> &dist, ofstream& fres)
 {
-	if (Result->count(best_index) || Opposite->count(best_index))
+	if (Result.count(best_index) || Opposite.count(best_index))
 		return;
 
 	fres << words[best_index] << endl;
-	Result->insert(best_index);
+	Result.insert(best_index);
 	for (int i = 0; i < g[best_index].size(); i++)
 	{
-		(*dist)[g[best_index][i]] += (w[best_index][i].first + w[best_index][i].second);
-		if (!Result->count(g[best_index][i]) && !Opposite->count(g[best_index][i]))
+		dist[g[best_index][i]] += (w[best_index][i].first + w[best_index][i].second);
+		if (!Result.count(g[best_index][i]) && !Opposite.count(g[best_index][i]))
 		{
-			Candidate->insert(g[best_index][i]);
+			Candidate.insert(g[best_index][i]);
 		}
 	}
 }
 
 
-void compute_dist(set<int> *Result, set<int> *Opposite, vector<int>* dist, vector<int>* opp_dist)
+void compute_dist(set<int> &Result, set<int> &Opposite, vector<int> &dist, vector<int> &opp_dist)
 {
-	for (int i = 0; i < dist->size(); i++)
+	for (int i = 0; i < dist.size(); i++)
 	{
 		int res = 0, opp_res = 0;
 		for (int j = 0; j < g[i].size(); j++)
 		{
-			if (Result->count(g[i][j]))
+			if (Result.count(g[i][j]))
 			{
 				res += (w[i][j].first + w[i][j].second);
 			}
-			if (Opposite->count(g[i][j]))
+			if (Opposite.count(g[i][j]))
 			{
 				opp_res += (w[i][j].first + w[i][j].second);
 			}
 
 		}	
-		(*dist)[i] = res;
-		(*opp_dist)[i] = opp_res;
+		dist[i] = res;
+		opp_dist[i] = opp_res;
 	}
 }
 
-void add_vertex(set<int> *Result, set<int> *Opposite, set<int> *Candidate, ofstream& fres, vector<int>* dist, vector<int>* opp_dist)
+void add_vertex(set<int> &Result, set<int> &Opposite, set<int> &Candidate, ofstream& fres, vector<int> &dist, vector<int> &opp_dist)
 {
 	int best_index = -1, best_max = -1000000000;
 	
-	for (set<int> :: iterator it = Candidate->begin(); it != Candidate->end(); it++)
+	for (set<int> :: iterator it = Candidate.begin(); it != Candidate.end(); it++)
 	{
 		if (*it < 0)
 			continue;
 
-		if ((*dist)[*it] - (*opp_dist)[*it] > best_max)
+		if (dist[*it] - opp_dist[*it] > best_max)
 		{
 			best_index = *it;
-			best_max = (*dist)[*it] - (*opp_dist)[*it];
+			best_max = dist[*it] - opp_dist[*it];
 		}
 	}
 	
 	if (best_index == -1)
 		return;
 
-	if (!Opposite->count(best_index))
+	if (!Opposite.count(best_index))
 	{
 		push_vertex(Result, Opposite, Candidate, best_index, dist, fres);
 	}
 
-	Candidate->erase(best_index);
+	Candidate.erase(best_index);
 }
 
-void out(set<int> res, char* filename)
+void out(set<int>& res, char* filename)
 {
 	freopen(filename, "w", stdout);
 	for (set<int> :: iterator it = res.begin(); it != res.end(); it++)
@@ -141,21 +141,21 @@ void out(set<int> res, char* filename)
     fclose(stdout);
 }
 
-void analyze(vector<string> seed_pos, vector<string> seed_neg, ofstream& fpos, ofstream& fneg)
+void analyze(vector<string>& seed_pos, vector<string>& seed_neg, ofstream& fpos, ofstream& fneg)
 {
 	set<int> Result_pos, Result_neg;
 	set <int> Candidate_pos;
 	for (int i = 0; i < seed_pos.size(); i++)
 	{
 		if (get_index(seed_pos[i]) != -1)
-			push_vertex(&Result_pos, &Result_neg, &Candidate_pos, get_index(seed_pos[i]), &pos_dist, fpos);
+			push_vertex(Result_pos, Result_neg, Candidate_pos, get_index(seed_pos[i]), pos_dist, fpos);
 	}
 
 	set <int> Candidate_neg;
 	for (int i = 0; i < seed_neg.size(); i++)
 	{
 		if (get_index(seed_neg[i]) != -1)
-			push_vertex(&Result_neg, &Result_pos, &Candidate_neg, get_index(seed_neg[i]), &neg_dist, fneg);
+			push_vertex(Result_neg, Result_pos, Candidate_neg, get_index(seed_neg[i]), neg_dist, fneg);
 	}
 
 	int step = 1;
@@ -163,31 +163,44 @@ void analyze(vector<string> seed_pos, vector<string> seed_neg, ofstream& fpos, o
     {
     	if (step)
     	{
-    		add_vertex(&Result_pos, &Result_neg, &Candidate_pos, fpos, &pos_dist, &neg_dist);
+    		add_vertex(Result_pos, Result_neg, Candidate_pos, fpos, pos_dist, neg_dist);
     	}
     	else
     	{
-    		add_vertex(&Result_neg, &Result_pos, &Candidate_neg, fneg, &neg_dist, &pos_dist);
+    		add_vertex(Result_neg, Result_pos, Candidate_neg, fneg, neg_dist, pos_dist);
     	}
     	step = 1 - step;
     }  
     fpos.close();
     fneg.close();
 
-    for (int t = 0; t < 0; t++){
-    compute_dist(&Result_pos, &Result_neg, &pos_dist, &neg_dist);
-    Result_pos.clear();
-    Result_neg.clear();
-    for (int i = 0; i < pos_dist.size(); i++)
+    for (int t = 0; t < 0; t++)
     {
-    	if (pos_dist[i] - neg_dist[i] > 3)
-    		Result_pos.insert(i);
-    	if (pos_dist[i] - neg_dist[i] < 0)
-    		Result_neg.insert(i);
+        compute_dist(Result_pos, Result_neg, pos_dist, neg_dist);
+        Result_pos.clear();
+        Result_neg.clear();
+        for (int i = 0; i < pos_dist.size(); i++)
+        {
+        	if (pos_dist[i] - neg_dist[i] > 3)
+        		Result_pos.insert(i);
+        	if (pos_dist[i] - neg_dist[i] < 0)
+        		Result_neg.insert(i);
+        }
+    
+        //out(Result_pos, posFile);
+        //out(Result_neg, negFile);   
     }
 
-    out(Result_pos, posFile);
-    out(Result_neg, negFile);   }
+    compute_dist(Result_pos, Result_neg, pos_dist, neg_dist);
+
+    ofstream fplot;
+    fplot.open("big_test/plot.csv");
+
+    for (int i = 0; i < pos_dist.size(); i++)
+    {
+    	fplot << words[i] << "," << pos_dist[i] - neg_dist[i] << endl;
+    }
+    fplot.close();
 } 
 
 
