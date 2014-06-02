@@ -52,8 +52,8 @@ void add_edge(string word1, string word2, int pos, int neg)
 
     g[beg].push_back(end);
     w[beg].push_back(make_pair(pos, neg));
-    g[end].push_back(beg);
-    w[end].push_back(make_pair(pos, neg));
+    //g[end].push_back(beg);
+    //w[end].push_back(make_pair(pos, neg));
 }
 
 

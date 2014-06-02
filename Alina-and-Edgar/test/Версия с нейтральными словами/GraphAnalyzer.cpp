@@ -1,4 +1,5 @@
 #include <iostream>
+#include <fstream>
 #include <cstdio>
 #include <string>
 #include <vector>
@@ -10,9 +11,11 @@ const int K = 1;
 vector <vector <pair <int, int> > > w;
 vector <vector <int> > g;
 vector <string> words;
+vector <int> pos_dist, neg_dist;
 char *posFile, *negFile;
 
 
+//заменить на map
 int get_index(string word)
 {
 	for (int i = 0; i < words.size(); i++)
@@ -32,6 +35,8 @@ int create_vertex(string word)
 	words.push_back(word);
 	g.push_back(vector <int>());
 	w.push_back(vector <pair <int, int> > ());
+	pos_dist.push_back(0);
+	neg_dist.push_back(0);
 	return i;
 }
 
@@ -51,101 +56,78 @@ void add_edge(string word1, string word2, int pos, int neg)
 	}
 
     g[beg].push_back(end);
-    w[beg].push_back(make_pair(pos, neg));
+    w[beg].push_back(make_pair(pos, K * neg));
     g[end].push_back(beg);
-    w[end].push_back(make_pair(pos, neg));
+    w[end].push_back(make_pair(pos, K * neg));
 }
 
 
-int the_most_heavy(set<int> Result, set<int> Opposite, int i)
+void push_vertex(set<int> *Result, set<int> *Opposite, set<int> *Candidate, int best_index, vector<int> *dist, ofstream& fres)
 {
-	int res_pos = 0, res_neg = 0;
-	for (int j = 0; j < g[i].size(); j++)
+	if (Result->count(best_index) || Opposite->count(best_index))
+		return;
+
+	fres << words[best_index] << endl;
+	Result->insert(best_index);
+	for (int i = 0; i < g[best_index].size(); i++)
 	{
-		if (Result.count(g[i][j]) && w[i][j].first + w[i][j].second > res_pos)
+		(*dist)[g[best_index][i]] += (w[best_index][i].first + w[best_index][i].second);
+		if (!Result->count(g[best_index][i]) && !Opposite->count(g[best_index][i]))
 		{
-			res_pos = w[i][j].first + K * w[i][j].second;
-		}
-		if (Opposite.count(g[i][j]) && w[i][j].first + w[i][j].second > res_neg)
-		{
-			res_neg = w[i][j].first + K * w[i][j].second;
+			Candidate->insert(g[best_index][i]);
 		}
 	}
-	return res_pos - res_neg;	
 }
 
 
-int the_sum(set<int> Result, set<int> Opposite, int i, int k)
+void compute_dist(set<int> *Result, set<int> *Opposite, vector<int>* dist, vector<int>* opp_dist)
 {
-	int res = 0;
-	for (int j = 0; j < g[i].size(); j++)
+	for (int i = 0; i < dist->size(); i++)
 	{
-		if (Result.count(g[i][j]))
+		int res = 0, opp_res = 0;
+		for (int j = 0; j < g[i].size(); j++)
 		{
-			res += w[i][j].first + k * w[i][j].second;
-		}
-		if (Opposite.count(g[i][j]))
-		{
-			res -= w[i][j].first + k * w[i][j].second;
-		}
+			if (Result->count(g[i][j]))
+			{
+				res += (w[i][j].first + w[i][j].second);
+			}
+			if (Opposite->count(g[i][j]))
+			{
+				opp_res += (w[i][j].first + w[i][j].second);
+			}
+
+		}	
+		(*dist)[i] = res;
+		(*opp_dist)[i] = opp_res;
 	}
-	return res;	
 }
 
-set<int> init(set<int> Result, set<int> Opposite)
+void add_vertex(set<int> *Result, set<int> *Opposite, set<int> *Candidate, ofstream& fres, vector<int>* dist, vector<int>* opp_dist)
 {
-    set<int> Candidate;
-    for (set<int> :: iterator it = Result.begin(); it != Result.end(); it++)
+	int best_index = -1, best_max = -1000000000;
+	
+	for (set<int> :: iterator it = Candidate->begin(); it != Candidate->end(); it++)
 	{
 		if (*it < 0)
 			continue;
-		for (int i = 0; i < g[*it].size(); i++)
-		{
-			if (!Result.count(g[*it][i]) && !Opposite.count(g[*it][i]))
-			{
-				Candidate.insert(g[*it][i]);
-			}
-		}
-	}
-	
-	return Candidate;
-}
 
-void add_vertex(set<int> *Result, set<int> *Opposite, set<int> *Candidate, int (*func)(set<int>, set<int>, int, int), int k)
-{
-	int best_index = -1, best_max = -1000000000;
-	for (set<int> :: iterator it = Candidate->begin(); it != Candidate->end(); it++)
-	{
-		int res = (*func)(*Result, *Opposite, *it, k);
-		if (res > best_max)
+		if ((*dist)[*it] - (*opp_dist)[*it] > best_max)
 		{
 			best_index = *it;
-			best_max = res;
+			best_max = (*dist)[*it] - (*opp_dist)[*it];
 		}
 	}
 	
-	if (best_index != -1 && !Opposite->count(best_index))
-	{
-		Result->insert(best_index);
-		for (int i = 0; i < g[best_index].size(); i++)
-		{
-			if (!Result->count(g[best_index][i]) && !Opposite->count(g[best_index][i]))
-			{
-				Candidate->insert(g[best_index][i]);
-			}
-		}
-
-		Candidate->erase(best_index);
+	if (best_index == -1)
 		return;
-	}
 
-	if (best_index !=  -1)
+	if (!Opposite->count(best_index))
 	{
-		cerr << words[best_index] << endl;
-		Candidate->erase(best_index);
+		push_vertex(Result, Opposite, Candidate, best_index, dist, fres);
 	}
-}
 
+	Candidate->erase(best_index);
+}
 
 void out(set<int> res, char* filename)
 {
@@ -159,41 +141,54 @@ void out(set<int> res, char* filename)
     fclose(stdout);
 }
 
-
-void analyze(vector<string> seed_pos, vector<string> seed_neg, int (*func)(set<int>, set<int>, int, int))
+void analyze(vector<string> seed_pos, vector<string> seed_neg, ofstream& fpos, ofstream& fneg)
 {
 	set<int> Result_pos, Result_neg;
-
+	set <int> Candidate_pos;
 	for (int i = 0; i < seed_pos.size(); i++)
-	{          
-		Result_pos.insert(get_index(seed_pos[i]));
+	{
+		if (get_index(seed_pos[i]) != -1)
+			push_vertex(&Result_pos, &Result_neg, &Candidate_pos, get_index(seed_pos[i]), &pos_dist, fpos);
 	}
 
+	set <int> Candidate_neg;
 	for (int i = 0; i < seed_neg.size(); i++)
-	{          
-		Result_neg.insert(get_index(seed_neg[i]));
+	{
+		if (get_index(seed_neg[i]) != -1)
+			push_vertex(&Result_neg, &Result_pos, &Candidate_neg, get_index(seed_neg[i]), &neg_dist, fneg);
 	}
-	        
-	set<int> Candidate_pos = init(Result_pos, Result_neg); 
-	set<int> Candidate_neg = init(Result_neg, Result_pos); 
-	       
+
 	int step = 1;
     while (Candidate_pos.size() != 0 || Candidate_neg.size() != 0)
     {
     	if (step)
     	{
-    		add_vertex(&Result_pos, &Result_neg, &Candidate_pos, (*func), K);
+    		add_vertex(&Result_pos, &Result_neg, &Candidate_pos, fpos, &pos_dist, &neg_dist);
     	}
     	else
     	{
-    		add_vertex(&Result_neg, &Result_pos, &Candidate_neg, (*func), 1);
+    		add_vertex(&Result_neg, &Result_pos, &Candidate_neg, fneg, &neg_dist, &pos_dist);
     	}
     	step = 1 - step;
     }  
+    fpos.close();
+    fneg.close();
+
+    for (int t = 0; t < 0; t++){
+    compute_dist(&Result_pos, &Result_neg, &pos_dist, &neg_dist);
+    Result_pos.clear();
+    Result_neg.clear();
+    for (int i = 0; i < pos_dist.size(); i++)
+    {
+    	if (pos_dist[i] - neg_dist[i] > 3)
+    		Result_pos.insert(i);
+    	if (pos_dist[i] - neg_dist[i] < 0)
+    		Result_neg.insert(i);
+    }
 
     out(Result_pos, posFile);
-    out(Result_neg, negFile);
-}
+    out(Result_neg, negFile);   }
+} 
 
 
 int main(int argc, char* argv[])
@@ -209,24 +204,40 @@ int main(int argc, char* argv[])
 
 	freopen(argv[1], "r", stdin);
 	while (!feof(stdin))
-	{
+	{                                              
 		string begin, end;
 		int pos, neg;
 		cin >> begin >> end >> pos >> neg;
-		//cout << begin << " " << end <<  " " << pos << " " << neg << endl;
-		//if (begin != "" && end != "")
-			add_edge(begin, end, pos, neg);   
+		add_edge(begin, end, pos, neg);   
 	}
 	fclose(stdin);
 
-	vector <string> seed_pos;
+	ofstream fpos, fneg;
+	fpos.open(posFile);	
+	fneg.open(negFile);
+
+
+	vector <string> seed_pos ;
 	seed_pos.push_back("хороший");
-	vector <string> seed_neg;
+	seed_pos.push_back("отличный");
+	seed_pos.push_back("замечательный");
+	seed_pos.push_back("прекрасный");
+	seed_pos.push_back("лучший");
+
+	vector <string> seed_neg ;
 	seed_neg.push_back("плохой");
-	
-	freopen("neutral", "a", stderr);
-	analyze(seed_pos, seed_neg, the_sum);
-	fclose(stderr);
+	seed_neg.push_back("ужасный");
+	seed_neg.push_back("отвратительный");
+	seed_neg.push_back("худший");
+	seed_neg.push_back("отвратный");
+	seed_neg.push_back("убогий");
+
+
+	//freopen("neutral", "a", stderr);
+	analyze(seed_pos, seed_neg, fpos, fneg);
+	//fclose(stderr);
+    //fpos.close();
+    //fneg.close();
 
 	return 0;
 }
