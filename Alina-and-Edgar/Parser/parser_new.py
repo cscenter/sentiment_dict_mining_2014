@@ -64,49 +64,50 @@ def find_related(pos, info, polarity):
     
 	print(pos)
 	while j + 2 < n:
+		old_j = j
 		print(annotations[j], annotations[j + 1], annotations[j + 2])
 		if j + 3 < n and annotations[j + 1].count(Comma) and annotations[j + 2].count(But):
-			#j += 3
-			print(", но")
-			res_list = get_adjective(j + 3)
+			j += 3
+			print(",_но")
+			res_list = get_adjective(j)
 			for res in res_list:
 				new_word, new_pol, new_info, new_pos = res
 				if new_info == info:
 					result.add((new_word, repr(-new_pol * polarity)))
-				j = new_pos
+					j = new_pos
 		elif j + 3 < n and annotations[j + 1].count(Comma) and annotations[j + 2].count(And):
-			#j += 3
-			print(", и")
-			res_list = get_adjective(j + 3)
+			j += 3
+			print(",_и")
+			res_list = get_adjective(j)
 			for res in res_list:
 				new_word, new_pol, new_info, new_pos = res
 				if new_info == info:
 					result.add((new_word, repr(new_pol * polarity)))
-				j = new_pos
+					j = new_pos
 		elif annotations[j + 1].count(But):
-			#j += 2
-			print(" но")
+			j += 2
+			print("_но")
 			res_list = get_adjective(j + 2)
 			for res in res_list:
 				new_word, new_pol, new_info, new_pos = res
 				if new_info == info:
 					result.add((new_word, repr(-new_pol * polarity)))
-				j = new_pos
+					j = new_pos
 		elif j + 2 < n and annotations[j + 1].count(And):
-			#j += 2
-			print(", | и")
-			res_list = get_adjective(j + 2)
+			j += 2
+			print("_и")
+			res_list = get_adjective(j)
 			for res in res_list:
 				new_word, new_pol, new_info, new_pos = res
 				if new_info == info:
 					result.add((new_word, repr(new_pol * polarity)))
-				j = new_pos
+					j = new_pos
 
 		elif j + 2 < n and annotations[j + 1].count(Comma):
 			print(annotations[j], annotations[j + 1], annotations[j + 2])
-			#j += 1
-			print("_")
-			res_list = get_adjective(j + 2)
+			j += 2
+			print(",_")
+			res_list = get_adjective(j)
 			for res in res_list:
 				new_word, new_pol, new_info, new_pos = res
 				#TextFile.write(new_pol)
@@ -114,12 +115,12 @@ def find_related(pos, info, polarity):
 				print(info, new_info)
 				if new_info == info:
 					result.add((new_word, repr(new_pol * polarity)))
-				j = new_pos
+					j = new_pos
 		else: 
 			print(annotations[j], annotations[j + 1], annotations[j + 2])
-			#j += 1
+			j += 1
 			print("_")
-			res_list = get_adjective(j + 1)
+			res_list = get_adjective(j)
 			if not res_list:
 				j += 1
 			for res in res_list:
@@ -128,10 +129,9 @@ def find_related(pos, info, polarity):
 				#TextFile.write(polarity)
 				if new_info == info:
 					result.add((new_word, repr(new_pol * polarity)))
-				if j != new_pos
 					j = new_pos
-				else:
-					j += 1
+		if j == old_j:
+			j += 1
 	return result
 
 	
@@ -157,6 +157,16 @@ def get_adjective(pos):
 	while is_adverb(pos):
 		#polarity *= is_adverb(pos)
 		pos += 1
+
+	if pos >= n:
+		return res
+
+
+	print(annotations[pos])
+	print(set(annotations[pos]))
+	print(Negations)
+	print(set(annotations[pos]).intersection(Negations))
+	print(is_negation(pos))
 
 	polarity = 1 - 2 * is_negation(pos)
 	if polarity == -1:
@@ -185,14 +195,16 @@ Comma = (",") #запятая
 And = ("и", "conj", "") #и
 But = ("но", "conj", "") #но
 
-Negations = set(("не","part", ""))
+Negations = set([("не","part", "")])
 Adverbs = [("очень", "adv", ""), ("совсем", "adv", ""), ("слишком", "adv", ""), ("вполне", "adv", ""), ("идеально", "adv", "")]
 
 str = "start"
+str_num = 0
 while len(str) > 0:
 	line = list()
 
 	while True:
+		str_num += 1
 		str = inFile.readline()
 		if not len(str) or is_end(str):
 			break
@@ -206,13 +218,18 @@ while len(str) > 0:
 	#print(annotations)
 	n = len(annotations)
 
-	for i in range(n):
+	i = 0
+	while i < n:
 		#for annotation in annotations[i]:
 		#	if len(annotation) != 3:
 		#		continue
 		#	word, POS, info = annotation
 		#	if POS == "a":
 		res_list = get_adjective(i)
+		print("reslist", res_list)
 		for res in res_list:		
 			word, polarity, info, pos = res
+			i = pos
+			print(word, polarity, info, pos)
 			print_result(word, find_related(pos, info, polarity))
+		i += 1
