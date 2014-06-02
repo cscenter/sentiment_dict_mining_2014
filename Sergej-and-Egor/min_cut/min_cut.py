@@ -2,9 +2,9 @@
 from graph_tool.all import Graph, label_components, graph_draw, label_largest_component, arf_layout
 from graph_tool.flow import min_cut
 
-filename = '../pairparser/results/en_pairs(7).txt'
+filename = '../pairparser/results/p_pairs7.txt'
 print(filename)
-coefficient = 5.278
+coefficient = 3
 
 word_dict = {}
 add_dict = {}
@@ -48,6 +48,8 @@ for line in f:
     else:
         v2 = pairs_graph.vertex(word_dict[w2])
 
+    if cur_weight == 0:
+        continue
     e = pairs_graph.add_edge(v1, v2)
     edge_weights[e] = cur_weight
 
@@ -149,8 +151,8 @@ for e in pairs_graph.edges():
 
 print("New cut value = " + str(cut_value))
 
-f1 = open('new3_first_part.txt', 'w', encoding="utf-8")
-f2 = open('new3_sec_part.txt', 'w', encoding="utf-8")
+f1 = open('new4_first_part.txt', 'w', encoding="utf-8")
+f2 = open('new4_sec_part.txt', 'w', encoding="utf-8")
 
 count1 = 0
 count2 = 0
@@ -171,10 +173,3 @@ f2.close()
 #pos = arf_layout(pairs_graph, max_iter=3)
 #graph_draw(pairs_graph, pos=pos, vertex_text=ver_names, edge_text=edge_weights, vertex_size=5,  vertex_font_size=10,
 #           edge_font_size=15, vertex_fill_color=part)
-
-
-
-
-
-
-

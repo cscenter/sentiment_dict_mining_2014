@@ -88,7 +88,8 @@ def escape_from_neg(fnamein, fnameout, ftransformed):
         if neg == -1:
             p_pos, p_neg = -p_neg, -p_pos
 
-        add_pair(pairs_dict, a1, a2, p_pos, p_neg)
+        if a1 != a2:
+            add_pair(pairs_dict, a1, a2, p_pos, p_neg)
 
     tf.close()
     fin.close()

@@ -24,10 +24,6 @@
 {\bf \Large Summary\\}
 \end{center}
 <<echo=FALSE>>=
-spl = strsplit(getwd(), '/')
-nwd = paste(spl[[1]][1:(length(spl[[1]]) - 2)], collapse = '/')
-nwd = paste(nwd, "pairparser/results", sep = "/")
-
 get_degree <- function(word, df) {
   return(nrow(df[ df$a1 == word| df$a2 == word, ]))
 }
@@ -49,11 +45,18 @@ get_neg_val <- function(word, df) {
 }
 @
 Считываем данные:
-<<>>=
+<<results='asis'>>=
+spl = strsplit(getwd(), '/')
+nwd = paste(spl[[1]][1:(length(spl[[1]]) - 2)], collapse = '/')
+nwd = paste(nwd, "pairparser/results", sep = "/")
 fname = "en_pairs(7).txt"
 df = read.table(paste(nwd, fname, sep = "/"), skip = 1, stringsAsFactors=FALSE, encoding="UTF-8")
 colnames(df) <- c("pos", "neg", "a1", "a2")
+head(df)
+sw <- df$pos + df$neg * 3
+sum = sum(sw[which(sw < 0)])
 @
+Сумма отрицательных рёбер = \Sexpr{sum}.
 <<echo=FALSE, results='asis'>>=
 #degree of node "хороший"
 hor_deg = get_degree("хороший", df)
@@ -90,6 +93,7 @@ for (j in (1:dict_len)) {
   w = dict[j]
   degrees[j] = get_degree(w, df)
 }
+print(max(degrees()))
 
 pos_degrees = rep(0, dict_len)
 for (j in (1:dict_len)) {

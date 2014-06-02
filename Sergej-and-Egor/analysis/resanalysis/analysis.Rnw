@@ -53,7 +53,7 @@ get_neg_val <- function(word, df) {
 spl = strsplit(getwd(), '/')
 nwd = paste(spl[[1]][1:(length(spl[[1]]) - 2)], collapse = '/')
 nwd = paste(nwd, "pairparser/results", sep = "/")
-fname = "en_pairs(7).txt"
+fname = "p_pairs7.txt"
 df = read.table(paste(nwd, fname, sep = "/"), skip = 1, stringsAsFactors=FALSE, encoding="UTF-8")
 colnames(df) <- c("pos", "neg", "a1", "a2")
 @
@@ -64,8 +64,8 @@ dict_len = length(dict)
 
 @
 Всего слов (прилагательных): \Sexpr{dict_len} \\
-<<results='asis'>>=
-ftag = '7_3imp'
+<<>>=
+ftag = '7_3p'
 
 spl = strsplit(getwd(), '/')
 nwd = paste(spl[[1]][1:(length(spl[[1]]) - 2)], collapse = '/')
@@ -80,6 +80,24 @@ neg_coef = 3
 ndf = df
 ndf$neg = ndf$neg * neg_coef
 
+ss = df$pos + df$neg
+maxss = max(ss)
+minss = min(ss)
+ratio = maxss / abs(minss)
+nss = df$pos + neg_coef * df$neg
+ssneg = sum(nss[which(nss < 0)])
+
+@
+Максимальный вес ребра = \Sexpr{maxss}\\
+Минимальный вес ребра = \Sexpr{minss}\\
+Отношение модуля максимального веса к минимальному = \Sexpr{ratio}\\
+Сумма всех отрицательных рёбер = \Sexpr{ssneg}\\
+Величина разреза: -34028.0\\
+Число рёбер в разрезе: 10145\\
+Число рёбер всего: 32759\\
+Число отрицательный рёбер: 7171\\
+Функция для подсчёта "веса" вершины:
+<<>>=
 comp_dict_neg = read.table('../../../testing/500_neg.txt', stringsAsFactors=FALSE, encoding="UTF-8")[, 'V1']
 comp_dict_pos = read.table('../../../testing/500_pos.txt', stringsAsFactors=FALSE, encoding="UTF-8")[, 'V1']
 
@@ -87,7 +105,7 @@ comp_dict_pos = read.table('../../../testing/500_pos.txt', stringsAsFactors=FALS
 #edge_cut_count = 0
 #neg_edge_count = nrow(ndf[ndf$pos + ndf$neg < 0, ])
 #neg_edge_count = 0
-#edge_count = nrow(ndf)
+#edge_count = nrow(ndf)++
 #for (i in 1:edge_count) {
 #  
 #  if (i %% 50 == 0) {
@@ -105,11 +123,6 @@ comp_dict_pos = read.table('../../../testing/500_pos.txt', stringsAsFactors=FALS
 #  }
 #}
 @
-Величина разреза: $\Sexpr{-34638}$\\
-Число рёбер в разрезе: $\Sexpr{10206}
-Число рёбер всего: $\Sexpr{34135}$\\
-Число отрицательный рёбер: $\Sexpr{7364}$\\
-Функция для подсчёта "веса" вершины:
 <<>>=
 get_sum <- function(word, df) {
   topos = df[((df$a1 == word & df$a2 %in% pos_dict) | 
@@ -138,13 +151,17 @@ get_sum <- function(word, df) {
 # sums[i] = get_sum(dict[i], ndf)
 #}
 #sums = matrix(c(dict, sums), ncol = 2)
-#write.table(sums[, c(1, 2)], file =paste(c("weights/sums", ftag, ".txt"), collapse=''), sep = ' ',  col.names = FALSE, quote = FALSE, #row.names = FALSE)
+#write.table(sums[, c(1, 2)], file =paste(c("weights/sumsF", ftag, ".txt"), collapse=''), sep = ' ',  #col.names = FALSE, quote = FALSE, row.names = FALSE)
 
 sums = read.table(paste(c("weights/sums", ftag, ".txt"), collapse=''), stringsAsFactors=FALSE, col.names = c('word', 's'))
-sums = sums[order(sums[[2]], decreasing=TRUE), ]
+bb = 1/(sums$s + 0.01)
+boxplot(bb)
+sums = sums[order(sums[2], decreasing=TRUE), ]
 plot(which(sums$w %in% pos_dict), sums[(sums$word %in% pos_dict == TRUE), 2], col = 'green', 
      xlab = 'words indexes', 
-     ylab = 'sum to pos - sum to neg')
+     ylab = 'sum to pos - sum to neg', 
+     ylim = c(min(sums[2]), max(sums[2])),
+     xlim = c(0, nrow(sums)))
 lines(which(sums$w %in% neg_dict), sums[(sums$word %in% neg_dict == TRUE), 2], col = 'red', type='p')
 lines(which(sums$w %in% comp_dict_pos), sums[(sums$word %in% comp_dict_pos == TRUE), 2], col = 'blue', type='p', pch=25)
 lines(which(sums$w %in% comp_dict_neg), sums[(sums$word %in% comp_dict_neg == TRUE), 2], col = 'pink', type='p', pch=22)
@@ -156,7 +173,9 @@ nsums = sums[(p1 * dict_len):(p2 * dict_len), ]
 plot(which(nsums$w %in% pos_dict), nsums[(nsums$word %in% pos_dict == TRUE), 2], col = 'green', 
      xlab = 'words indexes', 
      ylab = 'sum to pos - sum to neg',
-     main = '0.05 from top and 0.03 from bottom % cut')
+     main = '0.05 from top and 0.03 from bottom % cut', 
+     ylim = c(min(nsums[2]), max(nsums[2])),
+     xlim = c(0, nrow(sums)))
 lines(which(nsums$w %in% neg_dict), nsums[(nsums$word %in% neg_dict == TRUE), 2], col = 'red', type='p')
 lines(which(nsums$w %in% comp_dict_pos), nsums[(nsums$word %in% comp_dict_pos == TRUE), 2], col = 'blue', type='p', pch=25)
 lines(which(nsums$w %in% comp_dict_neg), nsums[(nsums$word %in% comp_dict_neg == TRUE), 2], col = 'pink', type='p', pch=22)
@@ -167,7 +186,9 @@ nsums = sums[(p1 * dict_len):(p2 * dict_len), ]
 plot(which(nsums$w %in% pos_dict), nsums[(nsums$word %in% pos_dict == TRUE), 2], col = 'green', 
      xlab = 'words indexes', 
      ylab = 'sum to pos - sum to neg',
-     main = '0.09 from top and 0.03 from bottom % cut')
+     main = '0.09 from top and 0.03 from bottom % cut', 
+     ylim = c(min(nsums[2]), max(nsums[2])),
+     xlim = c(0, nrow(sums)))
 lines(which(nsums$w %in% neg_dict), nsums[(nsums$word %in% neg_dict == TRUE), 2], col = 'red', type='p')
 lines(which(nsums$w %in% comp_dict_pos), nsums[(nsums$word %in% comp_dict_pos == TRUE), 2], col = 'blue', type='p', pch=25)
 lines(which(nsums$w %in% comp_dict_neg), nsums[(nsums$word %in% comp_dict_neg == TRUE), 2], col = 'pink', type='p', pch=22)
@@ -178,7 +199,36 @@ nsums = sums[(p1 * dict_len):(p2 * dict_len), ]
 plot(which(nsums$w %in% pos_dict), nsums[(nsums$word %in% pos_dict == TRUE), 2], col = 'green', 
      xlab = 'words indexes', 
      ylab = 'sum to pos - sum to neg',
-     main = '0.15 from top and 0.04 from bottom % cut')
+     main = '0.15 from top and 0.04 from bottom % cut', 
+     ylim = c(min(nsums[2]), max(nsums[2])),
+     xlim = c(0, nrow(sums)))
+lines(which(nsums$w %in% neg_dict), nsums[(nsums$word %in% neg_dict == TRUE), 2], col = 'red', type='p')
+lines(which(nsums$w %in% comp_dict_pos), nsums[(nsums$word %in% comp_dict_pos == TRUE), 2], col = 'blue', type='p', pch=25)
+lines(which(nsums$w %in% comp_dict_neg), nsums[(nsums$word %in% comp_dict_neg == TRUE), 2], col = 'pink', type='p', pch=22)
+
+
+p1 = 0.25
+p2 = 1 - 0.15
+nsums = sums[(p1 * dict_len):(p2 * dict_len), ]
+plot(which(nsums$w %in% pos_dict), nsums[(nsums$word %in% pos_dict == TRUE), 2], col = 'green', 
+     xlab = 'words indexes', 
+     ylab = 'sum to pos - sum to neg',
+     main = '0.15 from top and 0.04 from bottom % cut', 
+     ylim = c(min(nsums[2]), max(nsums[2])),
+     xlim = c(0, nrow(sums)))
+lines(which(nsums$w %in% neg_dict), nsums[(nsums$word %in% neg_dict == TRUE), 2], col = 'red', type='p')
+lines(which(nsums$w %in% comp_dict_pos), nsums[(nsums$word %in% comp_dict_pos == TRUE), 2], col = 'blue', type='p', pch=25)
+lines(which(nsums$w %in% comp_dict_neg), nsums[(nsums$word %in% comp_dict_neg == TRUE), 2], col = 'pink', type='p', pch=22)
+
+p1 = 0.4
+p2 = 1
+nsums = sums[(p1 * dict_len):(p2 * dict_len), ]
+plot(which(nsums$w %in% pos_dict), nsums[(nsums$word %in% pos_dict == TRUE), 2], col = 'green', 
+     xlab = 'words indexes', 
+     ylab = 'sum to pos - sum to neg',
+     main = '0.4 from top and 0 from bottom % cut', 
+     ylim = c(min(nsums[2]), max(nsums[2])),
+     xlim = c(0, nrow(sums)))
 lines(which(nsums$w %in% neg_dict), nsums[(nsums$word %in% neg_dict == TRUE), 2], col = 'red', type='p')
 lines(which(nsums$w %in% comp_dict_pos), nsums[(nsums$word %in% comp_dict_pos == TRUE), 2], col = 'blue', type='p', pch=25)
 lines(which(nsums$w %in% comp_dict_neg), nsums[(nsums$word %in% comp_dict_neg == TRUE), 2], col = 'pink', type='p', pch=22)
