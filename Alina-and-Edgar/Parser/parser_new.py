@@ -66,72 +66,106 @@ def find_related(pos, info, polarity):
 	while j + 2 < n:
 		old_j = j
 		print(annotations[j], annotations[j + 1], annotations[j + 2])
-		if j + 3 < n and annotations[j + 1].count(Comma) and annotations[j + 2].count(But):
+		if j + 3 < n and annotations[j + 1].count(Comma) and set(annotations[j + 2]).intersection(But):
 			j += 3
 			print(",_но")
 			res_list = get_adjective(j)
+			if not res_list:
+				break
+			polarity *= -1
+
+			fl = False
 			for res in res_list:
 				new_word, new_pol, new_info, new_pos = res
 				if new_info == info:
-					result.add((new_word, repr(-new_pol * polarity)))
+					fl = True
+					result.add((new_word, repr(new_pol * polarity)))
 					j = new_pos
+			if not fl:
+				break
 		elif j + 3 < n and annotations[j + 1].count(Comma) and annotations[j + 2].count(And):
 			j += 3
 			print(",_и")
 			res_list = get_adjective(j)
+			if not res_list:
+				break
+			fl = False
 			for res in res_list:
 				new_word, new_pol, new_info, new_pos = res
 				if new_info == info:
+					fl = True
 					result.add((new_word, repr(new_pol * polarity)))
 					j = new_pos
-		elif annotations[j + 1].count(But):
+			if not fl:
+				break
+
+		elif set(annotations[j + 1]).intersection(But):
 			j += 2
 			print("_но")
 			res_list = get_adjective(j + 2)
+			if not res_list:
+				break
+			polarity *= -1
+			fl = False
 			for res in res_list:
 				new_word, new_pol, new_info, new_pos = res
 				if new_info == info:
-					result.add((new_word, repr(-new_pol * polarity)))
+					fl = True
+					result.add((new_word, repr(new_pol * polarity)))
 					j = new_pos
+			if not fl:
+				break
+
 		elif j + 2 < n and annotations[j + 1].count(And):
 			j += 2
 			print("_и")
 			res_list = get_adjective(j)
+			if not res_list:
+				break
+			fl = False
 			for res in res_list:
 				new_word, new_pol, new_info, new_pos = res
 				if new_info == info:
+					fl = True
 					result.add((new_word, repr(new_pol * polarity)))
 					j = new_pos
+			if not fl:
+				break
 
 		elif j + 2 < n and annotations[j + 1].count(Comma):
 			print(annotations[j], annotations[j + 1], annotations[j + 2])
 			j += 2
 			print(",_")
 			res_list = get_adjective(j)
+			if not res_list:
+				break
+			fl = False
 			for res in res_list:
 				new_word, new_pol, new_info, new_pos = res
-				#TextFile.write(new_pol)
-				#TextFile.write(polarity)
 				print(info, new_info)
 				if new_info == info:
+					fl = True
 					result.add((new_word, repr(new_pol * polarity)))
 					j = new_pos
+			if not fl:
+				break
+
 		else: 
 			print(annotations[j], annotations[j + 1], annotations[j + 2])
 			j += 1
 			print("_")
 			res_list = get_adjective(j)
 			if not res_list:
-				j += 1
+				break
+			fl = False
 			for res in res_list:
 				new_word, new_pol, new_info, new_pos = res
-				#TextFile.write(new_pol)
-				#TextFile.write(polarity)
 				if new_info == info:
 					result.add((new_word, repr(new_pol * polarity)))
 					j = new_pos
-		if j == old_j:
-			j += 1
+			if not fl:
+				break
+
 	return result
 
 	
@@ -193,7 +227,7 @@ def get_adjective(pos):
 
 Comma = (",") #запятая
 And = ("и", "conj", "") #и
-But = ("но", "conj", "") #но
+But = set([("но", "conj", ""), ("зато", "conj", ""), ("однако", "conj", ""), ("да", "conj", "")]) #но
 
 Negations = set([("не","part", "")])
 Adverbs = [("очень", "adv", ""), ("совсем", "adv", ""), ("слишком", "adv", ""), ("вполне", "adv", ""), ("идеально", "adv", "")]
@@ -220,11 +254,6 @@ while len(str) > 0:
 
 	i = 0
 	while i < n:
-		#for annotation in annotations[i]:
-		#	if len(annotation) != 3:
-		#		continue
-		#	word, POS, info = annotation
-		#	if POS == "a":
 		res_list = get_adjective(i)
 		print("reslist", res_list)
 		for res in res_list:		
